@@ -1,0 +1,244 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { getEngineerById } from '@/lib/engineers';
+import { levelLabel } from '@/lib/matrix';
+import {
+  getCurrentUsername,
+  fetchPeriods,
+  fetchEngineerAssessments,
+} from '@/lib/api';
+import { AssessmentMatrix } from '@/components/AssessmentMatrix';
+import { PeriodSelector } from '@/components/PeriodSelector';
+import type { Assessment } from '@/lib/types';
+
+interface Props {
+  initialPeriod: string;
+}
+
+export function DashboardClient({ initialPeriod }: Props) {
+  const [username, setUsername] = useState('');
+  const [periods, setPeriods] = useState<string[]>([]);
+  const [selectedPeriod, setSelectedPeriod] = useState(initialPeriod);
+  const [adminAssessment, setAdminAssessment] = useState<Assessment | null>(
+    null,
+  );
+  const [selfAssessment, setSelfAssessment] = useState<Assessment | null>(null);
+  const [loadingInit, setLoadingInit] = useState(true);
+  const [loadingAssessments, setLoadingAssessments] = useState(false);
+
+  // Bootstrap: get username + periods
+  useEffect(() => {
+    async function init() {
+      try {
+        const [uname, ps] = await Promise.all([
+          getCurrentUsername(),
+          fetchPeriods(),
+        ]);
+        setUsername(uname);
+        setPeriods(ps);
+        if (!initialPeriod && ps.length > 0) setSelectedPeriod(ps[0]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingInit(false);
+      }
+    }
+    init();
+  }, [initialPeriod]);
+
+  // Load assessments when username + period are ready
+  const loadAssessments = useCallback(async () => {
+    if (!username || !selectedPeriod) return;
+    setLoadingAssessments(true);
+    try {
+      const { admin, self } = await fetchEngineerAssessments(
+        username,
+        selectedPeriod,
+      );
+      setAdminAssessment(admin);
+      setSelfAssessment(self);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingAssessments(false);
+    }
+  }, [username, selectedPeriod]);
+
+  useEffect(() => {
+    loadAssessments();
+  }, [loadAssessments]);
+
+  const engineer = username ? getEngineerById(username) : undefined;
+  const isLoading = loadingInit || loadingAssessments;
+  const isPrincipal = engineer?.level === 'PRINCIPAL_IC';
+
+  return (
+    <div>
+      {/* Page header */}
+      <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div className="flex items-center gap-2.5 mb-0.5">
+            <h1 className="text-2xl font-semibold text-brand-grey-dark">
+              My Assessments
+            </h1>
+            {engineer && (
+              <span
+                className={[
+                  'text-xs font-semibold px-2.5 py-1 rounded-full',
+                  isPrincipal
+                    ? 'bg-brand-red text-white'
+                    : 'bg-brand-grey-light text-brand-grey',
+                ].join(' ')}
+              >
+                {levelLabel(engineer.level)}
+              </span>
+            )}
+          </div>
+          {engineer && (
+            <p className="text-sm text-brand-grey">{engineer.name}</p>
+          )}
+        </div>
+
+        {!loadingInit && (
+          <PeriodSelector
+            periods={periods}
+            selected={selectedPeriod}
+            onChange={setSelectedPeriod}
+          />
+        )}
+      </div>
+
+      {/* No periods */}
+      {!loadingInit && periods.length === 0 && (
+        <div className="rounded-lg border-2 border-dashed border-gray-200 py-16 text-center">
+          <p className="text-brand-grey-dark font-medium mb-1">
+            No assessments available yet
+          </p>
+          <p className="text-sm text-brand-grey">
+            Your manager hasn&apos;t created an assessment period yet.
+          </p>
+        </div>
+      )}
+
+      {/* Content: two stacked sections */}
+      {(periods.length > 0 || isLoading) && (
+        <div className="flex flex-col gap-8">
+          {/* ── Manager Assessment ─────────────────────────────────────────── */}
+          <section>
+            <SectionHeader title="Manager Assessment" />
+            {isLoading ? (
+              <SkeletonMatrix />
+            ) : adminAssessment && engineer ? (
+              <>
+                <AssessmentMatrix
+                  level={engineer.level}
+                  ratings={adminAssessment.ratings}
+                  mode="view"
+                />
+                {adminAssessment.overallNote && (
+                  <div className="mt-3 bg-gray-50 rounded-lg border border-gray-100 px-4 py-3">
+                    <p className="text-xs font-semibold text-brand-grey mb-1">
+                      Overall note
+                    </p>
+                    <p className="text-sm text-brand-grey-dark">
+                      {adminAssessment.overallNote}
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <EmptyState text="Your manager hasn't submitted an assessment for this period yet." />
+            )}
+          </section>
+
+          {/* ── Your Self-Assessment ───────────────────────────────────────── */}
+          <section>
+            <SectionHeader
+              title="Your Self-Assessment"
+              action={
+                selectedPeriod && (
+                  <Link
+                    href={`/dashboard/self-assessment?period=${encodeURIComponent(selectedPeriod)}`}
+                    className="text-sm font-medium text-brand-red hover:underline"
+                  >
+                    {selfAssessment ? 'Edit →' : 'Start →'}
+                  </Link>
+                )
+              }
+            />
+            {isLoading ? (
+              <SkeletonMatrix />
+            ) : selfAssessment && engineer ? (
+              <>
+                <AssessmentMatrix
+                  level={engineer.level}
+                  ratings={selfAssessment.ratings}
+                  mode="view"
+                />
+                {selfAssessment.overallNote && (
+                  <div className="mt-3 bg-gray-50 rounded-lg border border-gray-100 px-4 py-3">
+                    <p className="text-xs font-semibold text-brand-grey mb-1">
+                      Overall note
+                    </p>
+                    <p className="text-sm text-brand-grey-dark">
+                      {selfAssessment.overallNote}
+                    </p>
+                  </div>
+                )}
+              </>
+            ) : (
+              <EmptyState text="You haven't submitted a self-assessment for this period yet.">
+                {selectedPeriod && (
+                  <Link
+                    href={`/dashboard/self-assessment?period=${encodeURIComponent(selectedPeriod)}`}
+                    className="mt-3 inline-block px-4 py-2 bg-brand-red hover:bg-brand-red-hover text-white text-sm font-medium rounded-md transition-colors"
+                  >
+                    Start Self-Assessment
+                  </Link>
+                )}
+              </EmptyState>
+            )}
+          </section>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Internal sub-components ────────────────────────────────────────────────────
+
+function SectionHeader({
+  title,
+  action,
+}: {
+  title: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-3 pb-2 border-b-2 border-brand-grey-light">
+      <h2 className="font-semibold text-brand-grey-dark">{title}</h2>
+      {action}
+    </div>
+  );
+}
+
+function EmptyState({
+  text,
+  children,
+}: {
+  text: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border-2 border-dashed border-gray-200 py-10 text-center">
+      <p className="text-sm text-brand-grey">{text}</p>
+      {children}
+    </div>
+  );
+}
+
+function SkeletonMatrix() {
+  return <div className="h-64 bg-gray-100 rounded-lg animate-pulse" />;
+}

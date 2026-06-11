@@ -1,26 +1,33 @@
 @import "tailwindcss";
 
+/* Invaluable brand + rating color tokens (Tailwind v4 @theme) */
+@theme {
+  /* Brand palette */
+  --color-brand-red: #E4002B;
+  --color-brand-red-hover: #C4001F;
+  --color-brand-grey: #666666;
+  --color-brand-grey-dark: #333333;
+  --color-brand-grey-light: #F0F0F0;
+
+  /* Rating status colors */
+  --color-rating-red: #E4002B;
+  --color-rating-red-light: #FEE2E8;
+  --color-rating-yellow: #F59E0B;
+  --color-rating-yellow-light: #FEF3C7;
+  --color-rating-green: #16A34A;
+  --color-rating-green-light: #DCFCE7;
+
+  /* Font */
+  --font-sans: var(--font-inter);
+}
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground: #1A1A1A;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
 }
