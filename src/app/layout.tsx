@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { AmplifyProvider } from "@/components/AmplifyProvider";
 import "./globals.css";
 
 const inter = Inter({
@@ -21,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <AmplifyProvider>{children}</AmplifyProvider>
+        {children}
       </body>
     </html>
   );

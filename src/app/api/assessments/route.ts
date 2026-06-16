@@ -1,23 +1,34 @@
-import { QueryCommand, PutCommand } from '@aws-sdk/lib-dynamodb';
 import type { NextRequest } from 'next/server';
-import { extractToken, verifyToken } from '@/lib/auth';
-import { docClient, TABLE_NAME, GSI_NAME, makePeriodType } from '@/lib/dynamo';
+import { getAuth } from '@/lib/auth';
+import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import { getEngineerById } from '@/lib/engineers';
-import type { Assessment, AssessorType, EngineerLevel } from '@/lib/types';
+import type { Assessment, AssessorType, EngineerLevel, Ratings } from '@/lib/types';
+
+function rowToAssessment(row: Record<string, unknown>): Assessment {
+  return {
+    engineerId: row.engineer_id as string,
+    engineerName: row.engineer_name as string,
+    engineerLevel: row.engineer_level as EngineerLevel,
+    assessorId: row.assessor_id as string,
+    assessorType: row.assessor_type as AssessorType,
+    period: row.period as string,
+    ratings: row.ratings as Ratings,
+    overallNote: (row.overall_note as string | null) ?? undefined,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
 
 // ── GET /api/assessments?period=2026-Q2&type=admin|self ───────────────────────
 // Admin only. Returns all assessment records for the given period.
 // If `type` is omitted, returns both admin and self records.
 
 export async function GET(request: NextRequest) {
-  const token = extractToken(request);
-  if (!token) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
   let auth;
   try {
-    auth = await verifyToken(token);
+    auth = await getAuth();
   } catch {
-    return Response.json({ error: 'Invalid token' }, { status: 401 });
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   if (!auth.isAdmin) {
@@ -32,54 +43,18 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'period query parameter is required' }, { status: 400 });
   }
 
-  try {
-    let items: Assessment[] = [];
+  const db = createSupabaseAdminClient();
+  let query = db.from('assessments').select('*').eq('period', period);
+  if (type) query = query.eq('assessor_type', type);
 
-    if (type) {
-      // Query GSI for a specific assessorType
-      const result = await docClient.send(
-        new QueryCommand({
-          TableName: TABLE_NAME,
-          IndexName: GSI_NAME,
-          KeyConditionExpression: '#period = :period AND assessorType = :type',
-          ExpressionAttributeNames: { '#period': 'period' },
-          ExpressionAttributeValues: { ':period': period, ':type': type },
-        })
-      );
-      items = (result.Items ?? []) as Assessment[];
-    } else {
-      // Fetch both admin and self in parallel
-      const [adminResult, selfResult] = await Promise.all([
-        docClient.send(
-          new QueryCommand({
-            TableName: TABLE_NAME,
-            IndexName: GSI_NAME,
-            KeyConditionExpression: '#period = :period AND assessorType = :type',
-            ExpressionAttributeNames: { '#period': 'period' },
-            ExpressionAttributeValues: { ':period': period, ':type': 'admin' },
-          })
-        ),
-        docClient.send(
-          new QueryCommand({
-            TableName: TABLE_NAME,
-            IndexName: GSI_NAME,
-            KeyConditionExpression: '#period = :period AND assessorType = :type',
-            ExpressionAttributeNames: { '#period': 'period' },
-            ExpressionAttributeValues: { ':period': period, ':type': 'self' },
-          })
-        ),
-      ]);
-      items = [
-        ...((adminResult.Items ?? []) as Assessment[]),
-        ...((selfResult.Items ?? []) as Assessment[]),
-      ];
-    }
-
-    return Response.json({ items });
-  } catch (err) {
-    console.error('GET /api/assessments error:', err);
+  const { data: rows, error } = await query;
+  if (error) {
+    console.error('GET /api/assessments error:', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
+
+  const items = (rows ?? []).map((r) => rowToAssessment(r as Record<string, unknown>));
+  return Response.json({ items });
 }
 
 // ── POST /api/assessments ─────────────────────────────────────────────────────
@@ -87,17 +62,14 @@ export async function GET(request: NextRequest) {
 // engineers can only save self-type records for themselves.
 
 export async function POST(request: NextRequest) {
-  const token = extractToken(request);
-  if (!token) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-
   let auth;
   try {
-    auth = await verifyToken(token);
+    auth = await getAuth();
   } catch {
-    return Response.json({ error: 'Invalid token' }, { status: 401 });
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  let body: Partial<Assessment>;
+  let body: Partial<Assessment> & { assessorType?: AssessorType; period?: string };
   try {
     body = await request.json();
   } catch {
@@ -109,11 +81,10 @@ export async function POST(request: NextRequest) {
   if (!engineerId || !engineerLevel || !assessorType || !period || !ratings) {
     return Response.json(
       { error: 'engineerId, engineerLevel, assessorType, period, and ratings are required' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
-  // Authorization: engineers can only save their own self-assessments
   if (!auth.isAdmin) {
     if (auth.username !== engineerId) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
@@ -128,47 +99,30 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: 'Engineer not found' }, { status: 404 });
   }
 
-  const now = new Date().toISOString();
-  const item: Assessment = {
-    engineerId,
-    periodType: makePeriodType(period, assessorType),
-    engineerName: engineer.name,
-    engineerLevel: engineerLevel as EngineerLevel,
-    assessorId: auth.username,
-    assessorType,
-    period,
-    ratings,
-    overallNote,
-    createdAt: now,
-    updatedAt: now,
-  };
+  const db = createSupabaseAdminClient();
+  const { data: row, error } = await db
+    .from('assessments')
+    .upsert(
+      {
+        engineer_id: engineerId,
+        period,
+        assessor_type: assessorType,
+        engineer_name: engineer.name,
+        engineer_level: engineerLevel,
+        assessor_id: auth.username,
+        ratings,
+        overall_note: overallNote ?? null,
+      },
+      { onConflict: 'engineer_id,period,assessor_type' },
+    )
+    .select()
+    .single();
 
-  try {
-    // Use a conditional write to preserve createdAt on updates
-    await docClient.send(
-      new PutCommand({
-        TableName: TABLE_NAME,
-        Item: item,
-        // If the item already exists, keep its original createdAt
-        ConditionExpression: 'attribute_not_exists(engineerId)',
-      })
-    );
-    return Response.json({ item }, { status: 201 });
-  } catch (err: unknown) {
-    if (
-      err instanceof Error &&
-      err.name === 'ConditionalCheckFailedException'
-    ) {
-      // Item exists — fall through to an unconditional update preserving createdAt
-      await docClient.send(
-        new PutCommand({
-          TableName: TABLE_NAME,
-          Item: { ...item, createdAt: body.createdAt ?? now },
-        })
-      );
-      return Response.json({ item }, { status: 200 });
-    }
-    console.error('POST /api/assessments error:', err);
+  if (error) {
+    console.error('POST /api/assessments error:', error);
     return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
+
+  const item = rowToAssessment(row as Record<string, unknown>);
+  return Response.json({ item }, { status: 200 });
 }

@@ -1,56 +1,54 @@
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-// Amplify v6 with ssr:true stores the access token in a predictable cookie name.
-// We use the clientId env var to build the key deterministically.
-function getAccessToken(request: NextRequest): string | null {
-  const clientId = process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID;
-  if (!clientId) return null;
-  return (
-    request.cookies.get(`CognitoIdentityServiceProvider.${clientId}.accessToken`)
-      ?.value ?? null
+export async function proxy(request: NextRequest) {
+  let response = NextResponse.next({ request });
+
+  // Create a Supabase client that reads/writes cookies on the request/response.
+  // This also refreshes expiring tokens automatically (setAll fires on refresh).
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookiesToSet) => {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value),
+          );
+          response = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options),
+          );
+        },
+      },
+    },
   );
-}
 
-// Decode JWT payload without signature verification.
-// Verification happens inside API routes — proxy only needs groups for routing.
-function decodeGroups(token: string): string[] {
-  try {
-    const base64 = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(base64)) as Record<string, unknown>;
-    return (payload['cognito:groups'] as string[] | undefined) ?? [];
-  } catch {
-    return [];
-  }
-}
-
-export function proxy(request: NextRequest) {
+  // getSession() reads from the cookie — no network call needed for routing.
+  const { data: { session } } = await supabase.auth.getSession();
   const { pathname } = request.nextUrl;
-  const accessToken = getAccessToken(request);
-  const isAuthenticated = !!accessToken;
 
-  // ── Unauthenticated ────────────────────────────────────────────────────────
-  if (!isAuthenticated) {
-    if (pathname === '/login') return NextResponse.next();
+  // ── Unauthenticated ──────────────────────────────────────────────────────────
+  if (!session) {
+    if (pathname === '/login') return response;
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // ── Authenticated on login or root → route to correct home ────────────────
+  // ── Authenticated on login or root → route to correct home ──────────────────
   if (pathname === '/login' || pathname === '/') {
-    const groups = decodeGroups(accessToken);
-    const dest = groups.includes('Admins') ? '/admin' : '/dashboard';
-    return NextResponse.redirect(new URL(dest, request.url));
+    const isAdmin = session.user.user_metadata?.isAdmin === true;
+    return NextResponse.redirect(new URL(isAdmin ? '/admin' : '/dashboard', request.url));
   }
 
-  // ── Guard /admin routes — engineers get redirected to /dashboard ───────────
+  // ── Guard /admin routes — engineers get redirected to /dashboard ─────────────
   if (pathname.startsWith('/admin')) {
-    const groups = decodeGroups(accessToken);
-    if (!groups.includes('Admins')) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
+    const isAdmin = session.user.user_metadata?.isAdmin === true;
+    if (!isAdmin) return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

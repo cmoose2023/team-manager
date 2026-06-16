@@ -1,34 +1,24 @@
-import { fetchAuthSession } from 'aws-amplify/auth';
+import { createSupabaseBrowserClient } from './supabase';
 import type { Assessment, Ratings } from './types';
 
 export async function getCurrentUsername(): Promise<string> {
-  const session = await fetchAuthSession();
-  const username = session.tokens?.accessToken?.payload['username'] as
-    | string
-    | undefined;
-  if (!username) throw new Error('Not authenticated');
-  return username;
+  const supabase = createSupabaseBrowserClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  return (user.user_metadata?.username as string | undefined) ?? user.email ?? '';
 }
 
-async function authHeaders(): Promise<HeadersInit> {
-  const session = await fetchAuthSession();
-  const token = session.tokens?.accessToken?.toString();
-  if (!token) throw new Error('Session expired — please sign in again.');
-  return { Authorization: `Bearer ${token}` };
-}
+// Cookies are sent automatically on same-origin requests — no auth headers needed.
 
 export async function fetchPeriods(): Promise<string[]> {
-  const res = await fetch('/api/periods', { headers: await authHeaders() });
+  const res = await fetch('/api/periods');
   if (!res.ok) throw new Error('Failed to fetch periods');
   const data: { periods: string[] } = await res.json();
   return data.periods;
 }
 
 export async function fetchAllAssessmentsForPeriod(period: string): Promise<Assessment[]> {
-  const res = await fetch(
-    `/api/assessments?period=${encodeURIComponent(period)}`,
-    { headers: await authHeaders() },
-  );
+  const res = await fetch(`/api/assessments?period=${encodeURIComponent(period)}`);
   if (!res.ok) throw new Error('Failed to fetch assessments');
   const data: { items: Assessment[] } = await res.json();
   return data.items;
@@ -40,7 +30,6 @@ export async function fetchEngineerAssessments(
 ): Promise<{ admin: Assessment | null; self: Assessment | null }> {
   const res = await fetch(
     `/api/assessments/${encodeURIComponent(engineerId)}?period=${encodeURIComponent(period)}`,
-    { headers: await authHeaders() },
   );
   if (!res.ok) throw new Error('Failed to fetch assessment');
   return res.json();
@@ -58,10 +47,7 @@ export async function saveAssessment(
 ): Promise<Assessment> {
   const res = await fetch(`/api/assessments/${encodeURIComponent(engineerId)}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(await authHeaders()),
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
   if (!res.ok) {

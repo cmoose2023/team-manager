@@ -1,33 +1,14 @@
-import { cookies } from 'next/headers';
 import { NavBar } from '@/components/NavBar';
-
-async function getUsernameFromCookies(): Promise<string> {
-  const clientId = process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID;
-  if (!clientId) return '';
-
-  const cookieStore = await cookies();
-  const token = cookieStore.get(
-    `CognitoIdentityServiceProvider.${clientId}.accessToken`,
-  )?.value;
-  if (!token) return '';
-
-  try {
-    const [, payload] = token.split('.');
-    const decoded = JSON.parse(
-      Buffer.from(payload, 'base64url').toString('utf8'),
-    ) as Record<string, unknown>;
-    return (decoded.username as string | undefined) ?? '';
-  } catch {
-    return '';
-  }
-}
+import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export default async function EngineerLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const username = await getUsernameFromCookies();
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const username = (user?.user_metadata?.username as string | undefined) ?? '';
 
   return (
     <>

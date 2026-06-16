@@ -1,40 +1,23 @@
-import { CognitoJwtVerifier } from 'aws-jwt-verify';
-import { type AuthPayload } from './types';
-
-// Lazily created so env vars are not required at build time
-let _verifier: ReturnType<typeof CognitoJwtVerifier.create> | null = null;
-
-function getVerifier() {
-  if (!_verifier) {
-    _verifier = CognitoJwtVerifier.create({
-      userPoolId: process.env.NEXT_PUBLIC_USER_POOL_ID!,
-      tokenUse: 'access',
-      clientId: process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID!,
-    });
-  }
-  return _verifier;
-}
+import { createSupabaseServerClient } from './supabase-server';
+import type { AuthPayload } from './types';
 
 /**
- * Verifies a Cognito access token and returns the caller's identity.
- * Throws if the token is invalid or expired.
+ * Validates the caller's Supabase session (from cookies) and returns their
+ * identity. Throws if the session is missing or invalid.
+ * For use in API Route Handlers only.
  */
-export async function verifyToken(token: string): Promise<AuthPayload> {
-  const payload = await getVerifier().verify(token);
-  const groups = (payload['cognito:groups'] as string[] | undefined) ?? [];
+export async function getAuth(): Promise<AuthPayload> {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+
+  if (error || !user) throw new Error('Unauthorized');
+
+  const username = (user.user_metadata?.username as string | undefined) ?? '';
+  const isAdmin = user.user_metadata?.isAdmin === true;
+
   return {
-    username: payload.username as string,
-    groups,
-    isAdmin: groups.includes('Admins'),
+    username,
+    groups: isAdmin ? ['Admins'] : [],
+    isAdmin,
   };
-}
-
-/**
- * Extracts the Bearer token from an Authorization header.
- * Returns null if the header is absent or malformed.
- */
-export function extractToken(request: Request): string | null {
-  const auth = request.headers.get('authorization');
-  if (!auth?.startsWith('Bearer ')) return null;
-  return auth.slice(7);
 }

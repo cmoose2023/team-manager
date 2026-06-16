@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { signOut } from 'aws-amplify/auth';
+import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { AppLogo } from './AppLogo';
 
 interface NavBarProps {
@@ -21,7 +21,8 @@ export function NavBar({ username, homeHref }: NavBarProps) {
   const router = useRouter();
 
   async function handleSignOut() {
-    await signOut();
+    const supabase = createSupabaseBrowserClient();
+    await supabase.auth.signOut();
     router.replace('/login');
   }
 
