@@ -37,3 +37,53 @@ export interface AuthPayload {
   groups: string[];
   isAdmin: boolean;
 }
+
+// ── Group Testing Scheduler ────────────────────────────────────────────────────
+
+export type TestResultStatus = 'pending' | 'pass' | 'fail' | 'skip';
+
+export interface TestSession {
+  id: string;
+  title: string;
+  scheduledDate: string;
+  ticketRef?: string;
+  goal?: string;
+  notes?: string;
+  signedOff: boolean;
+  createdBy: string;
+  attendees: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TestCase {
+  id: string;
+  sessionId: string;
+  label: string;
+  category?: string;
+  sortOrder: number;
+}
+
+export interface TestPermutation {
+  id: string;
+  sessionId: string;
+  label: string;
+  channel: string;
+  browser: string;
+  sortOrder: number;
+}
+
+export interface TestResult {
+  testCaseId: string;
+  permutationId: string;
+  status: TestResultStatus;
+  notes?: string;
+  updatedBy: string;
+  updatedAt: string;
+}
+
+export interface TestSessionDetail extends TestSession {
+  testCases: TestCase[];
+  permutations: TestPermutation[];
+  results: TestResult[];
+}

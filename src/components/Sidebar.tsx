@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, FlaskConical } from 'lucide-react';
 
 interface NavItem {
   label: string;
@@ -17,6 +17,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: ClipboardCheck,
     adminHref: '/admin',
     engineerHref: '/dashboard',
+  },
+  {
+    label: 'Group Testing',
+    icon: FlaskConical,
+    adminHref: '/group-testing',
+    engineerHref: '/group-testing',
   },
 ];
 

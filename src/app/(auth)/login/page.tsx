@@ -47,7 +47,7 @@ export default function LoginPage() {
           />
           <div className="text-center">
             <h1 className="text-xl font-semibold text-brand-grey-dark">
-              Engineering Assessment
+              Invaluable Team Management
             </h1>
             <p className="text-sm text-brand-grey mt-1">Sign in to continue</p>
           </div>
