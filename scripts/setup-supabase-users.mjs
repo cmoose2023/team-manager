@@ -34,24 +34,24 @@ const TEMP_PASSWORD = 'TempPass123!';
 const USERS = [
   // ── Admin ───────────────────────────────────────────────────────────────────
   {
-    email: 'admin@invaluable.com',
-    metadata: { username: 'admin', name: 'Admin', isAdmin: true },
+    email: 'crissmoosman1@gmail.com',
+    metadata: { username: 'admin', name: 'Criss Moosman', isAdmin: true },
   },
   // ── Engineers (match IDs in src/lib/engineers.ts) ───────────────────────────
   {
-    email: 'steven.snyder@invaluable.com',
+    email: 'ssnyder@invaluable.com',
     metadata: { username: 'steven.snyder', name: 'Steven Snyder', isAdmin: false },
   },
   {
-    email: 'julia.ballo@invaluable.com',
+    email: 'jballo@invaluable.com',
     metadata: { username: 'julia.ballo', name: 'Julia Ballo', isAdmin: false },
   },
   {
-    email: 'agnes.szigethy@invaluable.com',
+    email: 'aszigethy@invaluable.com',
     metadata: { username: 'agnes.szigethy', name: 'Agnes Szigethy', isAdmin: false },
   },
   {
-    email: 'michael.murphy@invaluable.com',
+    email: 'mmurphy@invaluable.com',
     metadata: { username: 'michael.murphy', name: 'Michael Murphy', isAdmin: false },
   },
 ];

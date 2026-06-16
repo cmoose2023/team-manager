@@ -8,8 +8,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Engineering Assessment | Invaluable",
-  description: "Engineering competency assessment tool for the Invaluable frontend team",
+  title: "Invaluable Team Management",
+  description: "Team management platform for Invaluable",
 };
 
 export default function RootLayout({

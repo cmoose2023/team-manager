@@ -1,4 +1,4 @@
-import { NavBar } from '@/components/NavBar';
+import { AppShell } from '@/components/AppShell';
 import { createSupabaseServerClient } from '@/lib/supabase-server';
 
 export default async function EngineerLayout({
@@ -11,11 +11,8 @@ export default async function EngineerLayout({
   const username = (user?.user_metadata?.username as string | undefined) ?? '';
 
   return (
-    <>
-      <NavBar username={username} homeHref="/dashboard" />
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {children}
-      </main>
-    </>
+    <AppShell username={username} isAdmin={false}>
+      {children}
+    </AppShell>
   );
 }
