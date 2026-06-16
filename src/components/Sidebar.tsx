@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardCheck, FlaskConical, Calculator } from 'lucide-react';
+import { ClipboardCheck, FlaskConical, Calculator, Presentation } from 'lucide-react';
 
 interface NavItem {
   label: string;
@@ -29,6 +29,12 @@ const NAV_ITEMS: NavItem[] = [
     icon: Calculator,
     adminHref: '/estimation',
     engineerHref: '/estimation',
+  },
+  {
+    label: 'FE Huddle Knowledge Share',
+    icon: Presentation,
+    adminHref: '/fe-huddle',
+    engineerHref: '/fe-huddle',
   },
 ];
 

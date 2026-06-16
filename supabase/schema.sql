@@ -103,3 +103,44 @@ ALTER TABLE test_session_attendees DISABLE ROW LEVEL SECURITY;
 ALTER TABLE test_cases            DISABLE ROW LEVEL SECURITY;
 ALTER TABLE test_permutations     DISABLE ROW LEVEL SECURITY;
 ALTER TABLE test_results          DISABLE ROW LEVEL SECURITY;
+
+-- ============================================================================
+-- FE Huddle Knowledge Share tables
+-- ============================================================================
+
+-- Pre-populated backlog topics with categories
+CREATE TABLE IF NOT EXISTS knowledge_share_backlog (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  category    TEXT        NOT NULL,
+  title       TEXT        NOT NULL,
+  description TEXT        NOT NULL,
+  claimed_by  TEXT                    REFERENCES auth.users(id),
+  claimed_at  TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Weekly rotation schedule (8 weeks)
+CREATE TABLE IF NOT EXISTS knowledge_share_sessions (
+  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  week        INTEGER     NOT NULL CHECK (week >= 1 AND week <= 8),
+  scheduled_date DATE,
+  presenter_id TEXT                   REFERENCES auth.users(id),
+  backlog_id   UUID                   REFERENCES knowledge_share_backlog(id),
+  topic_title  TEXT,
+  status       TEXT        NOT NULL DEFAULT 'planned'
+                 CHECK (status IN ('planned', 'confirmed', 'done')),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+DROP TRIGGER IF EXISTS knowledge_share_sessions_updated_at ON knowledge_share_sessions;
+CREATE TRIGGER knowledge_share_sessions_updated_at
+  BEFORE UPDATE ON knowledge_share_sessions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE INDEX IF NOT EXISTS knowledge_share_backlog_category_idx ON knowledge_share_backlog (category);
+CREATE INDEX IF NOT EXISTS knowledge_share_sessions_week_idx ON knowledge_share_sessions (week);
+CREATE INDEX IF NOT EXISTS knowledge_share_backlog_claimed_idx ON knowledge_share_backlog (claimed_by);
+
+ALTER TABLE knowledge_share_backlog   DISABLE ROW LEVEL SECURITY;
+ALTER TABLE knowledge_share_sessions  DISABLE ROW LEVEL SECURITY;

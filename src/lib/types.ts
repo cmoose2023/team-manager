@@ -87,3 +87,30 @@ export interface TestSessionDetail extends TestSession {
   permutations: TestPermutation[];
   results: TestResult[];
 }
+
+// ── FE Huddle Knowledge Share ─────────────────────────────────────────────────
+
+export type KnowledgeShareStatus = 'planned' | 'confirmed' | 'done';
+
+export interface KnowledgeShareBacklog {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  claimedBy?: string;
+  claimedAt?: string;
+  createdAt: string;
+}
+
+export interface KnowledgeShareSession {
+  id: string;
+  week: number;
+  scheduledDate?: string;
+  presenterId?: string;
+  presenterName?: string;
+  backlogId?: string;
+  topicTitle?: string;
+  status: KnowledgeShareStatus;
+  createdAt: string;
+  updatedAt: string;
+}
