@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Presentation, ChevronLeft, User, Check, X, Lightbulb, Wrench, GitBranch, Sparkles, CalendarPlus } from 'lucide-react';
+import { Presentation, ChevronLeft, User, Check, X, Lightbulb, Wrench, GitBranch, Sparkles, CalendarPlus, Calendar } from 'lucide-react';
 import { KnowledgeShareBacklog, KnowledgeShareSession } from '@/lib/types';
 
 const CATEGORY_ICONS: Record<string, typeof Lightbulb> = {
@@ -23,6 +23,9 @@ export default function BacklogPage() {
   const [currentUser, setCurrentUser] = useState<{ id: string; email: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [schedulingItem, setSchedulingItem] = useState<string | null>(null);
+  const [claimingItem, setClaimingItem] = useState<string | null>(null);
+  const [selectedWeek, setSelectedWeek] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>('');
 
   useEffect(() => {
     fetchBacklog();
@@ -66,10 +69,24 @@ export default function BacklogPage() {
     }
   };
 
-  const claimTopic = async (id: string) => {
+  const startClaim = (id: string) => {
+    setClaimingItem(id);
+    setSelectedWeek('');
+    setSelectedDate('');
+  };
+
+  const cancelClaim = () => {
+    setClaimingItem(null);
+    setSelectedWeek('');
+    setSelectedDate('');
+  };
+
+  const claimTopic = async () => {
+    if (!claimingItem || !selectedWeek || !selectedDate || !currentUser) return;
+    
     try {
       // Claim the topic first
-      const res = await fetch(`/api/knowledge-share/backlog/${id}`, {
+      const res = await fetch(`/api/knowledge-share/backlog/${claimingItem}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'claim' }),
@@ -80,39 +97,35 @@ export default function BacklogPage() {
       const backlogRes = await fetch('/api/knowledge-share/backlog');
       if (!backlogRes.ok) throw new Error('Failed to fetch backlog');
       const backlogData = await backlogRes.json();
-      const updatedItem = (backlogData.backlog || []).find((b: KnowledgeShareBacklog) => b.id === id);
+      const updatedItem = (backlogData.backlog || []).find((b: KnowledgeShareBacklog) => b.id === claimingItem);
       
-      if (!updatedItem || !currentUser) {
+      if (!updatedItem) {
         fetchBacklog();
+        setClaimingItem(null);
         return;
       }
       
-      // Find next available slot (lowest week number without a backlog_id)
-      const availableSlots = sessions
-        .filter((s) => !s.backlogId)
-        .sort((a, b) => a.week - b.week);
+      // Schedule with selected date
+      const scheduleRes = await fetch(`/api/knowledge-share/sessions/${selectedWeek}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          presenterId: currentUser.id,
+          presenterName: updatedItem.claimedByName,
+          backlogId: updatedItem.id,
+          topicTitle: updatedItem.title,
+          scheduledDate: selectedDate,
+          status: 'confirmed',
+        }),
+      });
       
-      if (availableSlots.length > 0) {
-        const nextSlot = availableSlots[0];
-        
-        // Auto-schedule to the next available slot
-        const scheduleRes = await fetch(`/api/knowledge-share/sessions/${nextSlot.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            presenterId: currentUser.id,
-            presenterName: updatedItem.claimedByName,
-            backlogId: updatedItem.id,
-            topicTitle: updatedItem.title,
-            status: 'confirmed',
-          }),
-        });
-        
-        if (scheduleRes.ok) {
-          fetchSessions();
-        }
+      if (scheduleRes.ok) {
+        fetchSessions();
       }
       
+      setClaimingItem(null);
+      setSelectedWeek('');
+      setSelectedDate('');
       fetchBacklog();
     } catch (err) {
       console.error('Error claiming topic:', err);
@@ -280,7 +293,7 @@ export default function BacklogPage() {
                         <div className="shrink-0">
                           {!isClaimed ? (
                             <button
-                              onClick={() => claimTopic(item.id)}
+                              onClick={() => startClaim(item.id)}
                               className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#E4002B] rounded-lg hover:bg-[#c40025] transition-colors"
                             >
                               <CalendarPlus size={14} />
@@ -390,6 +403,77 @@ export default function BacklogPage() {
           Back to Rotation Schedule
         </Link>
       </div>
+
+      {/* Claim & Schedule Modal */}
+      {claimingItem && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Schedule Your Presentation
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Select a week and date for your knowledge share.
+            </p>
+            
+            <div className="space-y-4">
+              {/* Week Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Week
+                </label>
+                <select
+                  value={selectedWeek}
+                  onChange={(e) => setSelectedWeek(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#E4002B] focus:border-[#E4002B]"
+                >
+                  <option value="">Select a week...</option>
+                  {sessions
+                    .filter((s) => !s.backlogId)
+                    .sort((a, b) => a.week - b.week)
+                    .map((s) => (
+                      <option key={s.id} value={s.id}>
+                        Week {s.week}
+                      </option>
+                    ))}
+                </select>
+              </div>
+
+              {/* Date Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Presentation Date
+                </label>
+                <input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#E4002B] focus:border-[#E4002B]"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={cancelClaim}
+                className="flex-1 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={claimTopic}
+                disabled={!selectedWeek || !selectedDate}
+                className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  !selectedWeek || !selectedDate
+                    ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                    : 'text-white bg-[#E4002B] hover:bg-[#c40025]'
+                }`}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

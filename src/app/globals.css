@@ -1,33 +1,61 @@
 @import "tailwindcss";
 
-/* Invaluable brand + rating color tokens (Tailwind v4 @theme) */
+/* Estimation theme color tokens (Tailwind v4 @theme) */
 @theme {
-  /* Brand palette */
-  --color-brand-red: #E4002B;
-  --color-brand-red-hover: #C4001F;
-  --color-brand-grey: #666666;
-  --color-brand-grey-dark: #333333;
-  --color-brand-grey-light: #F0F0F0;
+  /* Dark theme palette */
+  --color-bg-primary: #0a0a0a;
+  --color-bg-secondary: #141414;
+  --color-bg-card: #1a1a1a;
+  --color-border-subtle: rgba(255, 255, 255, 0.1);
+  --color-border-hover: rgba(255, 255, 255, 0.2);
 
-  /* Rating status colors */
-  --color-rating-red: #E4002B;
-  --color-rating-red-light: #FEE2E8;
-  --color-rating-yellow: #F59E0B;
-  --color-rating-yellow-light: #FEF3C7;
-  --color-rating-green: #16A34A;
-  --color-rating-green-light: #DCFCE7;
+  /* Accent colors */
+  --color-accent-red: #e03030;
+  --color-accent-red-hover: #c02525;
+  --color-accent-red-dim: rgba(224, 48, 48, 0.1);
+
+  /* Text colors */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-muted: rgba(255, 255, 255, 0.4);
+  --color-text-dim: rgba(255, 255, 255, 0.6);
+
+  /* Status colors */
+  --color-status-green: #16A34A;
+  --color-status-green-dim: rgba(22, 163, 74, 0.2);
+  --color-status-yellow: #F59E0B;
+  --color-status-yellow-dim: rgba(245, 158, 11, 0.2);
 
   /* Font */
   --font-sans: var(--font-inter);
 }
 
 :root {
-  --background: #ffffff;
-  --foreground: #1A1A1A;
+  --background: #0a0a0a;
+  --foreground: #ffffff;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #141414;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
 }

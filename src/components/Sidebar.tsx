@@ -49,7 +49,7 @@ export function Sidebar({ open, isAdmin }: SidebarProps) {
   return (
     <aside
       className={[
-        'flex flex-col border-r border-gray-200 bg-white transition-all duration-200 overflow-hidden shrink-0',
+        'flex flex-col border-r border-white/10 bg-[#141414] transition-all duration-200 overflow-hidden shrink-0',
         open ? 'w-60' : 'w-16',
       ].join(' ')}
     >
@@ -66,8 +66,8 @@ export function Sidebar({ open, isAdmin }: SidebarProps) {
               className={[
                 'flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors relative',
                 isActive
-                  ? 'text-brand-red bg-red-50 after:absolute after:right-0 after:top-0 after:h-full after:w-0.5 after:bg-brand-red'
-                  : 'text-brand-grey-dark hover:bg-gray-50 hover:text-brand-red',
+                  ? 'text-[#e03030] bg-[#e03030]/10 after:absolute after:right-0 after:top-0 after:h-full after:w-0.5 after:bg-[#e03030]'
+                  : 'text-white/70 hover:bg-white/5 hover:text-[#e03030]',
               ].join(' ')}
             >
               <Icon size={20} className="shrink-0" />
