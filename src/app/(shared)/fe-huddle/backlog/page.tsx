@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Presentation, ChevronLeft, User, Check, X, Lightbulb, Wrench, GitBranch, Sparkles } from 'lucide-react';
-import { KnowledgeShareBacklog } from '@/lib/types';
+import { Presentation, ChevronLeft, User, Check, X, Lightbulb, Wrench, GitBranch, Sparkles, CalendarPlus } from 'lucide-react';
+import { KnowledgeShareBacklog, KnowledgeShareSession } from '@/lib/types';
 
 const CATEGORY_ICONS: Record<string, typeof Lightbulb> = {
   'AI Tools & Workflows': Sparkles,
@@ -19,12 +19,15 @@ const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string
 
 export default function BacklogPage() {
   const [backlog, setBacklog] = useState<KnowledgeShareBacklog[]>([]);
-  const [currentUser, setCurrentUser] = useState<string>('');
+  const [sessions, setSessions] = useState<KnowledgeShareSession[]>([]);
+  const [currentUser, setCurrentUser] = useState<{ id: string; email: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [schedulingItem, setSchedulingItem] = useState<string | null>(null);
 
   useEffect(() => {
     fetchBacklog();
     fetchCurrentUser();
+    fetchSessions();
   }, []);
 
   const fetchCurrentUser = async () => {
@@ -32,10 +35,21 @@ export default function BacklogPage() {
       const res = await fetch('/api/auth/me');
       if (res.ok) {
         const data = await res.json();
-        setCurrentUser(data.user?.email || '');
+        setCurrentUser(data.user ? { id: data.user.id, email: data.user.email } : null);
       }
     } catch (err) {
       console.error('Error fetching user:', err);
+    }
+  };
+
+  const fetchSessions = async () => {
+    try {
+      const res = await fetch('/api/knowledge-share/sessions');
+      if (!res.ok) throw new Error('Failed to fetch');
+      const data = await res.json();
+      setSessions(data.sessions || []);
+    } catch (err) {
+      console.error('Error fetching sessions:', err);
     }
   };
 
@@ -77,6 +91,30 @@ export default function BacklogPage() {
       fetchBacklog();
     } catch (err) {
       console.error('Error unclaiming topic:', err);
+    }
+  };
+
+  const scheduleTopic = async (backlogId: string, sessionId: string) => {
+    try {
+      const item = backlog.find((b) => b.id === backlogId);
+      if (!item || !currentUser) return;
+
+      const res = await fetch(`/api/knowledge-share/sessions/${sessionId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          presenterId: currentUser.id,
+          presenterName: item.claimedByName,
+          backlogId: item.id,
+          topicTitle: item.title,
+          status: 'confirmed',
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to schedule');
+      fetchSessions();
+      setSchedulingItem(null);
+    } catch (err) {
+      console.error('Error scheduling topic:', err);
     }
   };
 
@@ -144,7 +182,8 @@ export default function BacklogPage() {
               <div className="grid gap-3">
                 {items.map((item) => {
                   const isClaimed = !!item.claimedBy;
-                  const isMine = item.claimedBy === currentUser;
+                  const isMine = item.claimedBy === currentUser?.id;
+                  const isScheduling = schedulingItem === item.id;
 
                   return (
                     <div
@@ -176,6 +215,27 @@ export default function BacklogPage() {
                               )}
                             </div>
                           )}
+                          
+                          {/* Show scheduled week if assigned */}
+                          {(() => {
+                            const assignedSession = sessions.find((s) => s.backlogId === item.id);
+                            if (assignedSession) {
+                              return (
+                                <div className="flex items-center gap-2 mt-2 text-sm">
+                                  <CalendarPlus size={14} className="text-green-500" />
+                                  <span className="text-green-600 font-medium">
+                                    Scheduled for Week {assignedSession.week}
+                                    {assignedSession.scheduledDate && (
+                                      <span className="text-green-500 font-normal">
+                                        {' '}({new Date(assignedSession.scheduledDate).toLocaleDateString()})
+                                      </span>
+                                    )}
+                                  </span>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
                         </div>
 
                         <div className="shrink-0">
@@ -188,13 +248,65 @@ export default function BacklogPage() {
                               Claim
                             </button>
                           ) : isMine ? (
-                            <button
-                              onClick={() => unclaimTopic(item.id)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                            >
-                              <X size={14} />
-                              Unclaim
-                            </button>
+                            <div className="flex gap-2">
+                              {/* Schedule Button */}
+                              {(() => {
+                                const assignedSession = sessions.find((s) => s.backlogId === item.id);
+                                if (!assignedSession) {
+                                  return (
+                                    <>
+                                      {isScheduling ? (
+                                        <select
+                                          autoFocus
+                                          onChange={(e) => {
+                                            if (e.target.value) {
+                                              scheduleTopic(item.id, e.target.value);
+                                            } else {
+                                              setSchedulingItem(null);
+                                            }
+                                          }}
+                                          className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-[#E4002B] focus:border-[#E4002B]"
+                                        >
+                                          <option value="">Select week...</option>
+                                          {sessions
+                                            .filter((s) => !s.backlogId && s.status === 'planned')
+                                            .map((s) => (
+                                              <option key={s.id} value={s.id}>
+                                                Week {s.week}
+                                                {s.scheduledDate ? ` (${new Date(s.scheduledDate).toLocaleDateString()})` : ''}
+                                              </option>
+                                            ))}
+                                        </select>
+                                      ) : (
+                                        <button
+                                          onClick={() => setSchedulingItem(item.id)}
+                                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#E4002B] rounded-lg hover:bg-[#c40025] transition-colors"
+                                        >
+                                          <CalendarPlus size={14} />
+                                          Schedule
+                                        </button>
+                                      )}
+                                      <button
+                                        onClick={() => unclaimTopic(item.id)}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                      >
+                                        <X size={14} />
+                                        Unclaim
+                                      </button>
+                                    </>
+                                  );
+                                }
+                                return (
+                                  <button
+                                    onClick={() => unclaimTopic(item.id)}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                  >
+                                    <X size={14} />
+                                    Unclaim
+                                  </button>
+                                );
+                              })()}
+                            </div>
                           ) : (
                             <span className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg">
                               <Check size={14} />
