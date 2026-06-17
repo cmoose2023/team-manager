@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Presentation, ChevronLeft, User, Check, X, Lightbulb, Wrench, GitBranch, Sparkles } from 'lucide-react';
 import { KnowledgeShareBacklog } from '@/lib/types';
-import { ENGINEERS } from '@/lib/engineers';
 
 const CATEGORY_ICONS: Record<string, typeof Lightbulb> = {
   'AI Tools & Workflows': Sparkles,
@@ -81,11 +80,6 @@ export default function BacklogPage() {
     }
   };
 
-  const getEngineerName = (username?: string) => {
-    if (!username) return '';
-    const engineer = ENGINEERS.find((e) => e.id === username);
-    return engineer?.name || username;
-  };
 
   // Group by category
   const groupedBacklog = backlog.reduce((acc, item) => {
@@ -173,7 +167,7 @@ export default function BacklogPage() {
                               <User size={14} className="text-gray-400" />
                               <span className="text-gray-600">Claimed by</span>
                               <span className="font-medium text-gray-900">
-                                {getEngineerName(item.claimedBy)}
+                                {item.claimedByName || 'Unknown'}
                               </span>
                               {item.claimedAt && (
                                 <span className="text-gray-400">

@@ -110,13 +110,14 @@ ALTER TABLE test_results          DISABLE ROW LEVEL SECURITY;
 
 -- Pre-populated backlog topics with categories
 CREATE TABLE IF NOT EXISTS knowledge_share_backlog (
-  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  category    TEXT        NOT NULL,
-  title       TEXT        NOT NULL,
-  description TEXT        NOT NULL,
-  claimed_by  TEXT                    REFERENCES auth.users(id),
-  claimed_at  TIMESTAMPTZ,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  category       TEXT        NOT NULL,
+  title          TEXT        NOT NULL,
+  description    TEXT        NOT NULL,
+  claimed_by     UUID                    REFERENCES auth.users(id),
+  claimed_by_name TEXT,                 -- display name for easy reference
+  claimed_at     TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Weekly rotation schedule (8 weeks)
@@ -124,7 +125,7 @@ CREATE TABLE IF NOT EXISTS knowledge_share_sessions (
   id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
   week        INTEGER     NOT NULL CHECK (week >= 1 AND week <= 8),
   scheduled_date DATE,
-  presenter_id TEXT                   REFERENCES auth.users(id),
+  presenter_id UUID                   REFERENCES auth.users(id),
   backlog_id   UUID                   REFERENCES knowledge_share_backlog(id),
   topic_title  TEXT,
   status       TEXT        NOT NULL DEFAULT 'planned'

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createSupabaseAdminClient } from '@/lib/supabase-server';
+import { createSupabaseAdminClient, createSupabaseServerClient } from '@/lib/supabase-server';
 import { getAuth } from '@/lib/auth';
 
 // PUT /api/knowledge-share/backlog/[id] - Claim or unclaim a topic
@@ -9,7 +9,18 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const auth = await getAuth();
+    
+    // Get current user UUID from Supabase auth
+    const serverClient = await createSupabaseServerClient();
+    const { data: { user }, error: userError } = await serverClient.auth.getUser();
+    
+    if (userError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    const userId = user.id;
+    const isAdmin = user.user_metadata?.isAdmin === true;
+    
     const supabase = createSupabaseAdminClient();
     
     // Get current item state
@@ -27,26 +38,32 @@ export async function PUT(
     const { action } = body; // 'claim' or 'unclaim'
     
     if (action === 'claim') {
-      // Check if already claimed
-      if (current.claimed_by && current.claimed_by !== auth.username) {
+      // Check if already claimed by someone else
+      if (current.claimed_by && current.claimed_by !== userId) {
         return NextResponse.json({ error: 'Already claimed by another user' }, { status: 409 });
       }
       
+      const displayName = (user.user_metadata?.name as string) || (user.user_metadata?.username as string) || user.email || 'Unknown';
+      
       const { error } = await supabase
         .from('knowledge_share_backlog')
-        .update({ claimed_by: auth.username, claimed_at: new Date().toISOString() })
+        .update({ 
+          claimed_by: userId, 
+          claimed_by_name: displayName,
+          claimed_at: new Date().toISOString() 
+        })
         .eq('id', id);
       
       if (error) throw error;
     } else if (action === 'unclaim') {
       // Only the claimer or admin can unclaim
-      if (current.claimed_by !== auth.username && !auth.isAdmin) {
+      if (current.claimed_by !== userId && !isAdmin) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
       
       const { error } = await supabase
         .from('knowledge_share_backlog')
-        .update({ claimed_by: null, claimed_at: null })
+        .update({ claimed_by: null, claimed_by_name: null, claimed_at: null })
         .eq('id', id);
       
       if (error) throw error;

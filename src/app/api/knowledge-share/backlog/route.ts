@@ -10,6 +10,7 @@ function rowToBacklog(row: Record<string, unknown>): KnowledgeShareBacklog {
     title: row.title as string,
     description: row.description as string,
     claimedBy: (row.claimed_by as string) || undefined,
+    claimedByName: (row.claimed_by_name as string) || undefined,
     claimedAt: (row.claimed_at as string) || undefined,
     createdAt: row.created_at as string,
   };

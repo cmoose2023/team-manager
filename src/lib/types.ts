@@ -98,6 +98,7 @@ export interface KnowledgeShareBacklog {
   title: string;
   description: string;
   claimedBy?: string;
+  claimedByName?: string;
   claimedAt?: string;
   createdAt: string;
 }
