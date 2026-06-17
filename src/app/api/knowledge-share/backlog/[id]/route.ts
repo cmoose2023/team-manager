@@ -70,9 +70,10 @@ export async function PUT(
     }
     
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('Error updating backlog item:', err);
-    return NextResponse.json({ error: 'Failed to update backlog item' }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: 'Failed to update backlog item', details: errorMessage }, { status: 500 });
   }
 }
 
