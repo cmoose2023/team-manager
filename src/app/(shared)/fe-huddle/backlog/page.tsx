@@ -68,12 +68,51 @@ export default function BacklogPage() {
 
   const claimTopic = async (id: string) => {
     try {
+      // Claim the topic first
       const res = await fetch(`/api/knowledge-share/backlog/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'claim' }),
       });
       if (!res.ok) throw new Error('Failed to claim');
+      
+      // Get the updated backlog item
+      const backlogRes = await fetch('/api/knowledge-share/backlog');
+      if (!backlogRes.ok) throw new Error('Failed to fetch backlog');
+      const backlogData = await backlogRes.json();
+      const updatedItem = (backlogData.backlog || []).find((b: KnowledgeShareBacklog) => b.id === id);
+      
+      if (!updatedItem || !currentUser) {
+        fetchBacklog();
+        return;
+      }
+      
+      // Find next available slot (lowest week number without a backlog_id)
+      const availableSlots = sessions
+        .filter((s) => !s.backlogId)
+        .sort((a, b) => a.week - b.week);
+      
+      if (availableSlots.length > 0) {
+        const nextSlot = availableSlots[0];
+        
+        // Auto-schedule to the next available slot
+        const scheduleRes = await fetch(`/api/knowledge-share/sessions/${nextSlot.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            presenterId: currentUser.id,
+            presenterName: updatedItem.claimedByName,
+            backlogId: updatedItem.id,
+            topicTitle: updatedItem.title,
+            status: 'confirmed',
+          }),
+        });
+        
+        if (scheduleRes.ok) {
+          fetchSessions();
+        }
+      }
+      
       fetchBacklog();
     } catch (err) {
       console.error('Error claiming topic:', err);
@@ -242,17 +281,18 @@ export default function BacklogPage() {
                           {!isClaimed ? (
                             <button
                               onClick={() => claimTopic(item.id)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#E4002B] bg-white border border-[#E4002B] rounded-lg hover:bg-[#E4002B]/5 transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#E4002B] rounded-lg hover:bg-[#c40025] transition-colors"
                             >
-                              <Check size={14} />
-                              Claim
+                              <CalendarPlus size={14} />
+                              Claim & Schedule
                             </button>
                           ) : isMine ? (
                             <div className="flex gap-2">
-                              {/* Schedule Button */}
+                              {/* Manual Schedule Button - only show if not already scheduled */}
                               {(() => {
                                 const assignedSession = sessions.find((s) => s.backlogId === item.id);
                                 if (!assignedSession) {
+                                  const availableSlots = sessions.filter((s) => !s.backlogId).length;
                                   return (
                                     <>
                                       {isScheduling ? (
@@ -267,9 +307,11 @@ export default function BacklogPage() {
                                           }}
                                           className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-[#E4002B] focus:border-[#E4002B]"
                                         >
-                                          <option value="">Select week...</option>
+                                          <option value="">
+                                            {availableSlots === 0 ? 'No slots available' : 'Select week...'}
+                                          </option>
                                           {sessions
-                                            .filter((s) => !s.backlogId && s.status === 'planned')
+                                            .filter((s) => !s.backlogId)
                                             .map((s) => (
                                               <option key={s.id} value={s.id}>
                                                 Week {s.week}
@@ -280,10 +322,15 @@ export default function BacklogPage() {
                                       ) : (
                                         <button
                                           onClick={() => setSchedulingItem(item.id)}
-                                          className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#E4002B] rounded-lg hover:bg-[#c40025] transition-colors"
+                                          disabled={availableSlots === 0}
+                                          className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                                            availableSlots === 0
+                                              ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
+                                              : 'text-white bg-[#E4002B] hover:bg-[#c40025]'
+                                          }`}
                                         >
                                           <CalendarPlus size={14} />
-                                          Schedule
+                                          {availableSlots === 0 ? 'No Slots' : 'Schedule'}
                                         </button>
                                       )}
                                       <button
