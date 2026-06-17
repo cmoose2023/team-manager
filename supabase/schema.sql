@@ -122,16 +122,17 @@ CREATE TABLE IF NOT EXISTS knowledge_share_backlog (
 
 -- Weekly rotation schedule (8 weeks)
 CREATE TABLE IF NOT EXISTS knowledge_share_sessions (
-  id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-  week        INTEGER     NOT NULL CHECK (week >= 1 AND week <= 8),
+  id             UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  week           INTEGER     NOT NULL CHECK (week >= 1 AND week <= 8),
   scheduled_date DATE,
-  presenter_id UUID                   REFERENCES auth.users(id),
-  backlog_id   UUID                   REFERENCES knowledge_share_backlog(id),
-  topic_title  TEXT,
-  status       TEXT        NOT NULL DEFAULT 'planned'
-                 CHECK (status IN ('planned', 'confirmed', 'done')),
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  presenter_id   UUID                   REFERENCES auth.users(id),
+  presenter_name TEXT,                   -- display name for easy reference
+  backlog_id     UUID                   REFERENCES knowledge_share_backlog(id),
+  topic_title    TEXT,
+  status         TEXT        NOT NULL DEFAULT 'planned'
+                   CHECK (status IN ('planned', 'confirmed', 'done')),
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 DROP TRIGGER IF EXISTS knowledge_share_sessions_updated_at ON knowledge_share_sessions;

@@ -54,8 +54,9 @@ export async function PUT(
     }
     
     return NextResponse.json({ session: rowToSession(row) });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('Error updating session:', err);
-    return NextResponse.json({ error: 'Failed to update session' }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: 'Failed to update session', details: errorMessage }, { status: 500 });
   }
 }

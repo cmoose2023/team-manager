@@ -46,8 +46,9 @@ export async function GET() {
     }
     
     return NextResponse.json({ sessions: rows.map(rowToSession) });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('Error fetching sessions:', err);
-    return NextResponse.json({ error: 'Failed to fetch sessions' }, { status: 500 });
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: 'Failed to fetch sessions', details: errorMessage }, { status: 500 });
   }
 }
