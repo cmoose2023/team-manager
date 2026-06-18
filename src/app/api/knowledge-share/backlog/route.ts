@@ -77,13 +77,10 @@ export async function GET() {
   }
 }
 
-// POST /api/knowledge-share/backlog - Create new backlog item (admin only)
+// POST /api/knowledge-share/backlog - Create new backlog item (any authenticated user)
 export async function POST(request: NextRequest) {
   try {
-    const auth = await getAuth();
-    if (!auth.isAdmin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
-    }
+    await getAuth(); // ensures user is authenticated
     
     const body = await request.json();
     const { category, title, description } = body;
