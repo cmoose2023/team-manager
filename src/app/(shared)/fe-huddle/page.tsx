@@ -6,13 +6,15 @@ import { Presentation, ChevronRight, CheckCircle2, Circle, Clock, Pencil, X, Tra
 import { KnowledgeShareSession, KnowledgeShareBacklog } from '@/lib/types';
 
 interface Engineer {
-  id: string;
+  id: string | null;  // Supabase UUID (null if user not found)
+  username: string;   // matches ENGINEERS[].id e.g. 'steven.snyder'
   name: string;
 }
 
 interface EditDraft {
   scheduledDate: string;
-  engineerId: string;
+  engineerId: string;      // Supabase UUID to persist
+  engineerUsername: string; // username for select controlled value
   engineerName: string;
   backlogId: string;
   topicTitle: string;
@@ -53,15 +55,17 @@ export default function FeHuddlePage() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  const startEdit = (session: KnowledgeShareSession) => {
+  const startEdit = (session: KnowledgeShareSession, engList: Engineer[]) => {
+    const existingEng = engList.find((e) => e.id === session.presenterId);
     setEditingId(session.id);
     setDraft({
-      scheduledDate: session.scheduledDate ?? '',
-      engineerId:    session.presenterId ?? '',
-      engineerName:  session.presenterName ?? '',
-      backlogId:     session.backlogId ?? '',
-      topicTitle:    session.topicTitle ?? '',
-      status:        session.status,
+      scheduledDate:    session.scheduledDate ?? '',
+      engineerId:       session.presenterId ?? '',
+      engineerUsername: existingEng?.username ?? '',
+      engineerName:     session.presenterName ?? '',
+      backlogId:        session.backlogId ?? '',
+      topicTitle:       session.topicTitle ?? '',
+      status:           session.status,
     });
   };
 
@@ -76,7 +80,7 @@ export default function FeHuddlePage() {
     setDraft(merged);
     setSaving(true);
     try {
-      await fetch(`/api/knowledge-share/sessions/${sessionId}`, {
+      const res = await fetch(`/api/knowledge-share/sessions/${sessionId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -88,6 +92,10 @@ export default function FeHuddlePage() {
           status:        merged.status,
         }),
       });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        console.error('Error saving session field:', res.status, errBody);
+      }
       await fetchAll();
     } catch (err) {
       console.error('Error saving session field:', err);
@@ -109,9 +117,13 @@ export default function FeHuddlePage() {
     }
   };
 
-  const handleEngineerChange = (sessionId: string, engineerId: string) => {
-    const eng = engineers.find((e) => e.id === engineerId);
-    saveField(sessionId, { engineerId, engineerName: eng?.name ?? '' });
+  const handleEngineerChange = (sessionId: string, username: string) => {
+    const eng = engineers.find((e) => e.username === username);
+    saveField(sessionId, {
+      engineerId:       eng?.id ?? '',
+      engineerUsername: username,
+      engineerName:     eng?.name ?? '',
+    });
   };
 
   const handleTopicChange = (sessionId: string, backlogId: string) => {
@@ -194,13 +206,13 @@ export default function FeHuddlePage() {
                     {/* Presenter dropdown */}
                     <td className="px-4 py-3">
                       <select
-                        value={draft.engineerId}
+                        value={draft.engineerUsername}
                         onChange={(e) => handleEngineerChange(session.id, e.target.value)}
                         className="w-full text-sm border border-white/20 rounded-lg px-2 py-1.5 bg-[#0a0a0a] text-white focus:ring-2 focus:ring-[#e03030] focus:border-[#e03030] focus:outline-none"
                       >
                         <option value="">Select engineer…</option>
                         {engineers.map((eng) => (
-                          <option key={eng.id} value={eng.id}>{eng.name}</option>
+                          <option key={eng.username} value={eng.username}>{eng.name}</option>
                         ))}
                       </select>
                     </td>
@@ -284,7 +296,7 @@ export default function FeHuddlePage() {
                         {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
                       </span>
                       <button
-                        onClick={() => startEdit(session)}
+                        onClick={() => startEdit(session, engineers)}
                         title="Edit row"
                         className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/10 transition-colors opacity-0 group-hover:opacity-100"
                       >

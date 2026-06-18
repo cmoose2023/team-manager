@@ -46,7 +46,10 @@ export async function PUT(
       .select()
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Supabase error updating session:', JSON.stringify(error));
+      throw error;
+    }
     if (!row) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
     }
@@ -54,8 +57,13 @@ export async function PUT(
     return NextResponse.json({ session: rowToSession(row) });
   } catch (err: unknown) {
     console.error('Error updating session:', err);
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-    return NextResponse.json({ error: 'Failed to update session', details: errorMessage }, { status: 500 });
+    const supaError = (err as { message?: string; code?: string; details?: string; hint?: string });
+    return NextResponse.json({
+      error: 'Failed to update session',
+      details: supaError?.message ?? String(err),
+      code: supaError?.code,
+      hint: supaError?.hint,
+    }, { status: 500 });
   }
 }
 
