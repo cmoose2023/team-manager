@@ -31,15 +31,15 @@ export function EngineerCard({
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left bg-white rounded-lg border border-gray-200 p-5 transition-all hover:border-brand-red hover:shadow-md hover:border-l-4 group focus:outline-none focus:ring-2 focus:ring-brand-red"
+      className="w-full text-left bg-[#141414] rounded-lg border border-white/10 p-5 transition-all hover:border-[#e03030] hover:shadow-lg hover:border-l-4 group focus:outline-none focus:ring-2 focus:ring-[#e03030]"
     >
       {/* Name + level badge */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div>
-          <p className="font-semibold text-brand-grey-dark text-base group-hover:text-brand-red transition-colors">
+          <p className="font-semibold text-white text-base group-hover:text-[#e03030] transition-colors">
             {engineer.name}
           </p>
-          <p className="text-xs text-brand-grey mt-0.5">
+          <p className="text-xs text-white/50 mt-0.5">
             {engineer.id}
           </p>
         </div>
@@ -47,8 +47,8 @@ export function EngineerCard({
           className={[
             'flex-shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap',
             isPrincipal
-              ? 'bg-brand-red text-white'
-              : 'bg-brand-grey-light text-brand-grey',
+              ? 'bg-[#e03030] text-white'
+              : 'bg-white/10 text-white/70',
           ].join(' ')}
         >
           {isPrincipal ? 'Principal IC' : 'Senior IC'}
@@ -61,7 +61,7 @@ export function EngineerCard({
           {CATEGORIES.map((cat) => (
             <div key={cat} className="flex flex-col items-center gap-1">
               <RatingDot value={aggregates[cat]} size="md" />
-              <span className="text-[10px] text-brand-grey font-medium">{cat}</span>
+              <span className="text-[10px] text-white/50 font-medium">{cat}</span>
             </div>
           ))}
         </div>
@@ -70,7 +70,7 @@ export function EngineerCard({
           {CATEGORIES.map((cat) => (
             <div key={cat} className="flex flex-col items-center gap-1">
               <RatingDot value="unrated" size="md" />
-              <span className="text-[10px] text-brand-grey font-medium">{cat}</span>
+              <span className="text-[10px] text-white/50 font-medium">{cat}</span>
             </div>
           ))}
         </div>
@@ -90,7 +90,7 @@ export function EngineerCard({
             period={period}
           />
         </div>
-        <span className="text-sm font-medium text-brand-red group-hover:underline">
+        <span className="text-sm font-medium text-[#e03030] group-hover:underline">
           {adminAssessment ? 'Edit →' : 'Start →'}
         </span>
       </div>
@@ -113,8 +113,8 @@ function StatusChip({
       className={[
         'text-[10px] font-medium px-2 py-0.5 rounded-full',
         active
-          ? 'bg-rating-green-light text-rating-green'
-          : 'bg-gray-100 text-gray-400',
+          ? 'bg-green-500/20 text-green-400'
+          : 'bg-white/10 text-white/40',
       ].join(' ')}
     >
       {active ? `✓ ${label}` : `– ${label}`}

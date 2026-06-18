@@ -12,9 +12,9 @@ const CATEGORY_ICONS: Record<string, typeof Lightbulb> = {
 };
 
 const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string }> = {
-  'AI Tools & Workflows': { bg: 'bg-purple-50', border: 'border-purple-200', text: 'text-purple-700' },
-  'Frontend Concepts & Deep Dives': { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' },
-  'Workflows & Engineering Practice': { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' },
+  'AI Tools & Workflows': { bg: 'bg-purple-500/10', border: 'border-purple-500/30', text: 'text-purple-400' },
+  'Frontend Concepts & Deep Dives': { bg: 'bg-amber-500/10', border: 'border-amber-500/30', text: 'text-amber-400' },
+  'Workflows & Engineering Practice': { bg: 'bg-blue-500/10', border: 'border-blue-500/30', text: 'text-blue-400' },
 };
 
 export default function BacklogPage() {
@@ -182,7 +182,7 @@ export default function BacklogPage() {
     return (
       <div className="max-w-5xl mx-auto">
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#E4002B]" />
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#e03030]" />
         </div>
       </div>
     );
@@ -193,10 +193,10 @@ export default function BacklogPage() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <Presentation className="text-[#E4002B]" size={28} />
-          <h1 className="text-2xl font-semibold text-gray-900">Topic Backlog</h1>
+          <Presentation className="text-[#e03030]" size={28} />
+          <h1 className="text-2xl font-semibold text-white">Topic Backlog</h1>
         </div>
-        <p className="text-gray-600">
+        <p className="text-white/60">
           A running list to pull from. Mix categories week to week so it doesn't become all-AI or all-deep-dives in a row.
         </p>
       </div>
@@ -205,13 +205,13 @@ export default function BacklogPage() {
       <div className="flex gap-4 mb-6">
         <Link
           href="/fe-huddle"
-          className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 border border-transparent"
+          className="px-4 py-2 rounded-lg text-sm font-medium text-white/60 hover:bg-white/5 border border-transparent"
         >
           Rotation Schedule
         </Link>
         <Link
           href="/fe-huddle/backlog"
-          className="px-4 py-2 rounded-lg text-sm font-medium bg-[#E4002B]/10 text-[#E4002B] border border-[#E4002B]/20"
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-[#e03030]/10 text-[#e03030] border border-[#e03030]/20"
         >
           Topic Backlog
         </Link>
@@ -220,7 +220,7 @@ export default function BacklogPage() {
       {/* Backlog by Category */}
       <div className="space-y-8">
         {Object.entries(groupedBacklog).map(([category, items]) => {
-          const colors = CATEGORY_COLORS[category] || { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-700' };
+          const colors = CATEGORY_COLORS[category] || { bg: 'bg-[#141414]', border: 'border-white/10', text: 'text-white/70' };
           const Icon = CATEGORY_ICONS[category] || Lightbulb;
 
           return (
@@ -228,7 +228,7 @@ export default function BacklogPage() {
               <div className={`flex items-center gap-2 mb-4 ${colors.text}`}>
                 <Icon size={20} />
                 <h2 className="text-lg font-semibold">{category}</h2>
-                <span className="text-sm text-gray-400">({items.length})</span>
+                <span className="text-sm text-white/40">({items.length})</span>
               </div>
 
               <div className="grid gap-3">
@@ -246,22 +246,22 @@ export default function BacklogPage() {
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <h3 className={`font-medium ${isClaimed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                          <h3 className={`font-medium ${isClaimed ? 'text-white/40 line-through' : 'text-white'}`}>
                             {item.title}
                           </h3>
-                          <p className={`text-sm mt-1 ${isClaimed ? 'text-gray-400' : 'text-gray-600'}`}>
+                          <p className={`text-sm mt-1 ${isClaimed ? 'text-white/30' : 'text-white/60'}`}>
                             {item.description}
                           </p>
 
                           {isClaimed && (
                             <div className="flex items-center gap-2 mt-3 text-sm">
-                              <User size={14} className="text-gray-400" />
-                              <span className="text-gray-600">Claimed by</span>
-                              <span className="font-medium text-gray-900">
+                              <User size={14} className="text-white/40" />
+                              <span className="text-white/50">Claimed by</span>
+                              <span className="font-medium text-white">
                                 {item.claimedByName || 'Unknown'}
                               </span>
                               {item.claimedAt && (
-                                <span className="text-gray-400">
+                                <span className="text-white/30">
                                   on {new Date(item.claimedAt).toLocaleDateString()}
                                 </span>
                               )}
@@ -274,11 +274,11 @@ export default function BacklogPage() {
                             if (assignedSession) {
                               return (
                                 <div className="flex items-center gap-2 mt-2 text-sm">
-                                  <CalendarPlus size={14} className="text-green-500" />
-                                  <span className="text-green-600 font-medium">
+                                  <CalendarPlus size={14} className="text-green-400" />
+                                  <span className="text-green-400 font-medium">
                                     Scheduled for Week {assignedSession.week}
                                     {assignedSession.scheduledDate && (
-                                      <span className="text-green-500 font-normal">
+                                      <span className="text-green-500/70 font-normal">
                                         {' '}({new Date(assignedSession.scheduledDate).toLocaleDateString()})
                                       </span>
                                     )}
@@ -294,7 +294,7 @@ export default function BacklogPage() {
                           {!isClaimed ? (
                             <button
                               onClick={() => startClaim(item.id)}
-                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#E4002B] rounded-lg hover:bg-[#c40025] transition-colors"
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#e03030] rounded-lg hover:bg-[#c02525] transition-colors"
                             >
                               <CalendarPlus size={14} />
                               Claim & Schedule
@@ -318,7 +318,7 @@ export default function BacklogPage() {
                                               setSchedulingItem(null);
                                             }
                                           }}
-                                          className="text-sm border border-gray-300 rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-[#E4002B] focus:border-[#E4002B]"
+                                          className="text-sm border border-white/20 rounded-lg px-2 py-1.5 bg-[#0a0a0a] text-white focus:ring-2 focus:ring-[#e03030] focus:border-[#e03030]"
                                         >
                                           <option value="">
                                             {availableSlots === 0 ? 'No slots available' : 'Select week...'}
@@ -338,8 +338,8 @@ export default function BacklogPage() {
                                           disabled={availableSlots === 0}
                                           className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
                                             availableSlots === 0
-                                              ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                                              : 'text-white bg-[#E4002B] hover:bg-[#c40025]'
+                                              ? 'text-white/40 bg-white/5 cursor-not-allowed'
+                                              : 'text-white bg-[#e03030] hover:bg-[#c02525]'
                                           }`}
                                         >
                                           <CalendarPlus size={14} />
@@ -348,7 +348,7 @@ export default function BacklogPage() {
                                       )}
                                       <button
                                         onClick={() => unclaimTopic(item.id)}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white/70 bg-[#141414] border border-white/20 rounded-lg hover:bg-white/5 transition-colors"
                                       >
                                         <X size={14} />
                                         Unclaim
@@ -368,7 +368,7 @@ export default function BacklogPage() {
                               })()}
                             </div>
                           ) : (
-                            <span className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-400 bg-gray-100 rounded-lg">
+                            <span className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white/40 bg-white/5 rounded-lg">
                               <Check size={14} />
                               Claimed
                             </span>
@@ -386,10 +386,10 @@ export default function BacklogPage() {
 
       {/* Empty State */}
       {backlog.length === 0 && (
-        <div className="text-center py-12 text-gray-500">
-          <Lightbulb size={48} className="mx-auto mb-4 text-gray-300" />
-          <p className="text-lg font-medium">No topics in the backlog</p>
-          <p className="text-sm mt-1">Topics will be auto-populated on first load.</p>
+        <div className="text-center py-12 text-white/50">
+          <Lightbulb size={48} className="mx-auto mb-4 text-white/20" />
+          <p className="text-lg font-medium text-white">No topics in the backlog</p>
+          <p className="text-sm mt-1 text-white/40">Topics will be auto-populated on first load.</p>
         </div>
       )}
 
@@ -397,7 +397,7 @@ export default function BacklogPage() {
       <div className="mt-8">
         <Link
           href="/fe-huddle"
-          className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-[#E4002B] transition-colors"
+          className="inline-flex items-center gap-1 text-sm text-white/50 hover:text-[#e03030] transition-colors"
         >
           <ChevronLeft size={16} />
           Back to Rotation Schedule
@@ -407,24 +407,24 @@ export default function BacklogPage() {
       {/* Claim & Schedule Modal */}
       {claimingItem && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-[#141414] rounded-lg shadow-xl max-w-md w-full mx-4 p-6 border border-white/10">
+            <h3 className="text-lg font-semibold text-white mb-4">
               Schedule Your Presentation
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-white/60 mb-4">
               Select a week and date for your knowledge share.
             </p>
             
             <div className="space-y-4">
               {/* Week Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/80 mb-1">
                   Week
                 </label>
                 <select
                   value={selectedWeek}
                   onChange={(e) => setSelectedWeek(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#E4002B] focus:border-[#E4002B]"
+                  className="w-full border border-white/20 rounded-lg px-3 py-2 bg-[#0a0a0a] text-white focus:ring-2 focus:ring-[#e03030] focus:border-[#e03030]"
                 >
                   <option value="">Select a week...</option>
                   {sessions
@@ -440,14 +440,14 @@ export default function BacklogPage() {
 
               {/* Date Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-white/80 mb-1">
                   Presentation Date
                 </label>
                 <input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => setSelectedDate(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-[#E4002B] focus:border-[#E4002B]"
+                  className="w-full border border-white/20 rounded-lg px-3 py-2 bg-[#0a0a0a] text-white focus:ring-2 focus:ring-[#e03030] focus:border-[#e03030]"
                 />
               </div>
             </div>
@@ -455,7 +455,7 @@ export default function BacklogPage() {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={cancelClaim}
-                className="flex-1 px-4 py-2 text-sm font-medium text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                className="flex-1 px-4 py-2 text-sm font-medium text-white/70 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
               >
                 Cancel
               </button>
@@ -464,8 +464,8 @@ export default function BacklogPage() {
                 disabled={!selectedWeek || !selectedDate}
                 className={`flex-1 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                   !selectedWeek || !selectedDate
-                    ? 'text-gray-400 bg-gray-100 cursor-not-allowed'
-                    : 'text-white bg-[#E4002B] hover:bg-[#c40025]'
+                    ? 'text-white/40 bg-white/5 cursor-not-allowed'
+                    : 'text-white bg-[#e03030] hover:bg-[#c02525]'
                 }`}
               >
                 Confirm

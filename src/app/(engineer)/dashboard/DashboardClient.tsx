@@ -80,7 +80,7 @@ export function DashboardClient({ initialPeriod }: Props) {
       <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2.5 mb-0.5">
-            <h1 className="text-2xl font-semibold text-brand-grey-dark">
+            <h1 className="text-2xl font-semibold text-white">
               My Assessments
             </h1>
             {engineer && (
@@ -88,8 +88,8 @@ export function DashboardClient({ initialPeriod }: Props) {
                 className={[
                   'text-xs font-semibold px-2.5 py-1 rounded-full',
                   isPrincipal
-                    ? 'bg-brand-red text-white'
-                    : 'bg-brand-grey-light text-brand-grey',
+                    ? 'bg-[#e03030] text-white'
+                    : 'bg-white/10 text-white/70',
                 ].join(' ')}
               >
                 {levelLabel(engineer.level)}
@@ -97,7 +97,7 @@ export function DashboardClient({ initialPeriod }: Props) {
             )}
           </div>
           {engineer && (
-            <p className="text-sm text-brand-grey">{engineer.name}</p>
+            <p className="text-sm text-white/60">{engineer.name}</p>
           )}
         </div>
 
@@ -112,11 +112,11 @@ export function DashboardClient({ initialPeriod }: Props) {
 
       {/* No periods */}
       {!loadingInit && periods.length === 0 && (
-        <div className="rounded-lg border-2 border-dashed border-gray-200 py-16 text-center">
-          <p className="text-brand-grey-dark font-medium mb-1">
+        <div className="rounded-lg border-2 border-dashed border-white/20 py-16 text-center">
+          <p className="text-white font-medium mb-1">
             No assessments available yet
           </p>
-          <p className="text-sm text-brand-grey">
+          <p className="text-sm text-white/60">
             Your manager hasn&apos;t created an assessment period yet.
           </p>
         </div>
@@ -138,11 +138,11 @@ export function DashboardClient({ initialPeriod }: Props) {
                   mode="view"
                 />
                 {adminAssessment.overallNote && (
-                  <div className="mt-3 bg-gray-50 rounded-lg border border-gray-100 px-4 py-3">
-                    <p className="text-xs font-semibold text-brand-grey mb-1">
+                  <div className="mt-3 bg-[#141414] rounded-lg border border-white/10 px-4 py-3">
+                    <p className="text-xs font-semibold text-white/60 mb-1">
                       Overall note
                     </p>
-                    <p className="text-sm text-brand-grey-dark">
+                    <p className="text-sm text-white">
                       {adminAssessment.overallNote}
                     </p>
                   </div>
@@ -178,11 +178,11 @@ export function DashboardClient({ initialPeriod }: Props) {
                   mode="view"
                 />
                 {selfAssessment.overallNote && (
-                  <div className="mt-3 bg-gray-50 rounded-lg border border-gray-100 px-4 py-3">
-                    <p className="text-xs font-semibold text-brand-grey mb-1">
+                  <div className="mt-3 bg-[#141414] rounded-lg border border-white/10 px-4 py-3">
+                    <p className="text-xs font-semibold text-white/60 mb-1">
                       Overall note
                     </p>
-                    <p className="text-sm text-brand-grey-dark">
+                    <p className="text-sm text-white">
                       {selfAssessment.overallNote}
                     </p>
                   </div>
@@ -193,7 +193,7 @@ export function DashboardClient({ initialPeriod }: Props) {
                 {selectedPeriod && (
                   <Link
                     href={`/dashboard/self-assessment?period=${encodeURIComponent(selectedPeriod)}`}
-                    className="mt-3 inline-block px-4 py-2 bg-brand-red hover:bg-brand-red-hover text-white text-sm font-medium rounded-md transition-colors"
+                    className="mt-3 inline-block px-4 py-2 bg-[#e03030] hover:bg-[#c02525] text-white text-sm font-medium rounded-md transition-colors"
                   >
                     Start Self-Assessment
                   </Link>
@@ -217,8 +217,8 @@ function SectionHeader({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between mb-3 pb-2 border-b-2 border-brand-grey-light">
-      <h2 className="font-semibold text-brand-grey-dark">{title}</h2>
+    <div className="flex items-center justify-between mb-3 pb-2 border-b-2 border-white/10">
+      <h2 className="font-semibold text-white">{title}</h2>
       {action}
     </div>
   );
@@ -232,13 +232,13 @@ function EmptyState({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border-2 border-dashed border-gray-200 py-10 text-center">
-      <p className="text-sm text-brand-grey">{text}</p>
+    <div className="rounded-lg border-2 border-dashed border-white/20 py-10 text-center">
+      <p className="text-sm text-white/60">{text}</p>
       {children}
     </div>
   );
 }
 
 function SkeletonMatrix() {
-  return <div className="h-64 bg-gray-100 rounded-lg animate-pulse" />;
+  return <div className="h-64 bg-[#141414] rounded-lg animate-pulse" />;
 }

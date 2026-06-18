@@ -72,11 +72,11 @@ export default function AdminDashboard() {
       {/* Page header */}
       <div className="flex flex-col gap-4 mb-8 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-brand-grey-dark">
+          <h1 className="text-2xl font-semibold text-white">
             Team Assessments
           </h1>
           {selectedPeriod && (
-            <p className="text-sm text-brand-grey mt-0.5">
+            <p className="text-sm text-white/60 mt-0.5">
               {ENGINEERS.length} engineers · {selectedPeriod}
             </p>
           )}
@@ -94,18 +94,18 @@ export default function AdminDashboard() {
       </div>
 
       {error && (
-        <p className="text-sm text-rating-red bg-rating-red-light rounded-md px-4 py-2 mb-6">
+        <p className="text-sm text-[#e03030] bg-[#e03030]/10 rounded-md px-4 py-2 mb-6">
           {error}
         </p>
       )}
 
       {/* No periods yet */}
       {!loadingPeriods && periods.length === 0 && (
-        <div className="rounded-lg border-2 border-dashed border-gray-200 py-16 text-center">
-          <p className="text-brand-grey-dark font-medium mb-1">
+        <div className="rounded-lg border-2 border-dashed border-white/20 py-16 text-center">
+          <p className="text-white font-medium mb-1">
             No assessment periods yet
           </p>
-          <p className="text-sm text-brand-grey">
+          <p className="text-sm text-white/60">
             Create a period (e.g. 2026-Q2) using the selector above to get
             started.
           </p>
@@ -119,7 +119,7 @@ export default function AdminDashboard() {
             isLoading ? (
               <div
                 key={engineer.id}
-                className="h-52 bg-gray-100 rounded-lg animate-pulse"
+                className="h-52 bg-[#141414] rounded-lg animate-pulse"
               />
             ) : (
               <EngineerCard

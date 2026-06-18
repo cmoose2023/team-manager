@@ -63,7 +63,7 @@ export function PeriodSelector({
   if (creating) {
     return (
       <form onSubmit={handleCreate} className="flex items-center gap-2 flex-wrap">
-        <label className="text-sm font-medium text-brand-grey-dark whitespace-nowrap">
+        <label className="text-sm font-medium text-white/80 whitespace-nowrap">
           New period
         </label>
         <input
@@ -72,23 +72,23 @@ export function PeriodSelector({
           onChange={(e) => setNewPeriodValue(e.target.value)}
           placeholder="e.g. 2026-Q3"
           autoFocus
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent w-36"
+          className="px-3 py-1.5 text-sm border border-white/20 rounded-md focus:outline-none focus:ring-2 focus:ring-[#e03030] focus:border-transparent w-36 bg-[#0a0a0a] text-white placeholder-white/40"
         />
         <button
           type="submit"
           disabled={saving || !newPeriodValue.trim()}
-          className="px-3 py-1.5 bg-brand-red text-white text-sm font-medium rounded-md hover:bg-brand-red-hover transition-colors disabled:opacity-50"
+          className="px-3 py-1.5 bg-[#e03030] text-white text-sm font-medium rounded-md hover:bg-[#c02525] transition-colors disabled:opacity-50"
         >
           {saving ? 'Adding…' : 'Add'}
         </button>
         <button
           type="button"
           onClick={handleCancelCreate}
-          className="px-3 py-1.5 bg-white border border-gray-300 text-brand-grey-dark text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
+          className="px-3 py-1.5 bg-white/10 border border-white/20 text-white text-sm font-medium rounded-md hover:bg-white/20 transition-colors"
         >
           Cancel
         </button>
-        {error && <p className="w-full text-xs text-rating-red">{error}</p>}
+        {error && <p className="w-full text-xs text-[#e03030]">{error}</p>}
       </form>
     );
   }
@@ -97,7 +97,7 @@ export function PeriodSelector({
     <div className="flex items-center gap-2">
       <label
         htmlFor="period-selector"
-        className="text-sm font-medium text-brand-grey-dark whitespace-nowrap"
+        className="text-sm font-medium text-white/80 whitespace-nowrap"
       >
         Review period
       </label>
@@ -105,7 +105,7 @@ export function PeriodSelector({
         id="period-selector"
         value={selected}
         onChange={handleSelectChange}
-        className="px-3 py-1.5 text-sm border border-gray-300 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-brand-red focus:border-transparent"
+        className="px-3 py-1.5 text-sm border border-white/20 rounded-md bg-[#0a0a0a] text-white focus:outline-none focus:ring-2 focus:ring-[#e03030] focus:border-transparent"
       >
         {periods.length === 0 && (
           <option value="" disabled>

@@ -49,7 +49,7 @@ export function AssessmentMatrix({
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 overflow-hidden">
+    <div className="rounded-lg border border-white/10 overflow-hidden">
       {CATEGORIES.map((category) => {
         const criteria = criteriaByCategory[category] ?? [];
         if (criteria.length === 0) return null;
@@ -62,8 +62,8 @@ export function AssessmentMatrix({
         return (
           <section key={category} className="last:border-b-0">
             {/* Category header */}
-            <div className="flex items-center justify-between px-4 py-3 bg-brand-grey-light border-l-4 border-brand-red border-b border-gray-200">
-              <h3 className="font-semibold text-brand-grey-dark">{category}</h3>
+            <div className="flex items-center justify-between px-4 py-3 bg-[#141414] border-l-4 border-[#e03030] border-b border-white/10">
+              <h3 className="font-semibold text-white">{category}</h3>
               <div className="flex items-center gap-1.5">
                 <RatingDot value={aggregate} size="md" showLabel />
               </div>
