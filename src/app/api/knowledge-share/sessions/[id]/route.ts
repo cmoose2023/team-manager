@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
-import { getAuth } from '@/lib/auth';
 import { KnowledgeShareSession } from '@/lib/types';
 
 function rowToSession(row: Record<string, unknown>): KnowledgeShareSession {
@@ -25,7 +24,6 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const auth = await getAuth();
     const body = await request.json();
     
     const { scheduledDate, presenterId, presenterName, backlogId, topicTitle, status } = body;
@@ -58,5 +56,41 @@ export async function PUT(
     console.error('Error updating session:', err);
     const errorMessage = err instanceof Error ? err.message : 'Unknown error';
     return NextResponse.json({ error: 'Failed to update session', details: errorMessage }, { status: 500 });
+  }
+}
+
+// DELETE /api/knowledge-share/sessions/[id] - Clear a session back to planned state
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const supabase = createSupabaseAdminClient();
+
+    const { data: row, error } = await supabase
+      .from('knowledge_share_sessions')
+      .update({
+        scheduled_date: null,
+        presenter_id: null,
+        presenter_name: null,
+        backlog_id: null,
+        topic_title: null,
+        status: 'planned',
+      })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    if (!row) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ session: rowToSession(row) });
+  } catch (err: unknown) {
+    console.error('Error clearing session:', err);
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: 'Failed to clear session', details: errorMessage }, { status: 500 });
   }
 }
