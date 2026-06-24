@@ -38,24 +38,12 @@ export function CriterionRow({
 
   return (
     <div className={`${rowBg} px-4 py-4 border-b border-white/10`}>
-      {/* Criterion text + rating selector */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
-        {/* Index + text */}
-        <div className="flex gap-3 min-w-0 flex-1">
-          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-white/70 text-xs font-semibold flex items-center justify-center mt-0.5">
-            {index}
-          </span>
-          <p className="text-sm text-white/90 leading-relaxed">{criterion.text}</p>
-        </div>
-
-        {/* Rating selector */}
-        <div className="sm:flex-shrink-0 pl-9 sm:pl-0">
-          <RatingSelector
-            value={rating.rating}
-            onChange={isEditable ? handleRatingChange : undefined}
-            readonly={!isEditable}
-          />
-        </div>
+      {/* Criterion text */}
+      <div className="flex gap-3 min-w-0">
+        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-white/10 text-white/70 text-xs font-semibold flex items-center justify-center mt-0.5">
+          {index}
+        </span>
+        <p className="text-sm text-white/90 leading-relaxed">{criterion.text}</p>
       </div>
 
       {/* Note areas */}
@@ -98,6 +86,18 @@ export function CriterionRow({
             {rating.note}
           </p>
         )}
+
+        {/* Rating selector */}
+        <div>
+          <label className="block text-xs font-medium text-white/60 mb-1">
+            {mode === 'view' ? 'Rating' : 'Select rating'}
+          </label>
+          <RatingSelector
+            value={rating.rating}
+            onChange={isEditable ? handleRatingChange : undefined}
+            readonly={!isEditable}
+          />
+        </div>
       </div>
     </div>
   );
