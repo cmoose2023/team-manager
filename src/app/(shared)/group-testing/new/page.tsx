@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Plus, Trash2, X } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { ENGINEERS } from '@/lib/engineers';
 
 const CHANNELS = ['Auction', 'Retail', 'Marketplace'];

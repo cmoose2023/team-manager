@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Check,
@@ -15,7 +15,7 @@ import {
   FileText,
   Signature,
 } from 'lucide-react';
-import type { TestSessionDetail, TestResultStatus, TestCase, TestPermutation } from '@/lib/types';
+import type { TestSessionDetail, TestResultStatus } from '@/lib/types';
 
 const STATUS_CONFIG: Record<
   TestResultStatus,
@@ -31,7 +31,6 @@ const STATUS_ORDER: TestResultStatus[] = ['pending', 'pass', 'fail', 'skip'];
 
 export default function SessionRunnerPage() {
   const params = useParams();
-  const router = useRouter();
   const sessionId = params.id as string;
 
   const [session, setSession] = useState<TestSessionDetail | null>(null);
@@ -55,6 +54,7 @@ export default function SessionRunnerPage() {
   }, [sessionId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSession();
   }, [fetchSession]);
 
@@ -104,7 +104,7 @@ export default function SessionRunnerPage() {
         }
         return { ...prev, results: newResults };
       });
-    } catch (err) {
+    } catch {
       alert('Failed to update result');
     } finally {
       setUpdating((prev) => {

@@ -3,7 +3,7 @@ import { getAuth } from '@/lib/auth';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
 import type { TestSession, TestSessionDetail, TestCase, TestPermutation, TestResult } from '@/lib/types';
 
-function rowToTestSession(row: Record<string, unknown>): TestSession {
+function rowToTestSession(row: Record<string, unknown>, attendees: string[] = []): TestSession {
   return {
     id: row.id as string,
     title: row.title as string,
@@ -13,10 +13,24 @@ function rowToTestSession(row: Record<string, unknown>): TestSession {
     notes: (row.notes as string | null) ?? undefined,
     signedOff: row.signed_off as boolean,
     createdBy: row.created_by as string,
-    attendees: row.attendees as string[],
+    attendees,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
+}
+
+async function fetchAttendees(db: ReturnType<typeof createSupabaseAdminClient>, sessionId: string) {
+  const { data, error } = await db
+    .from('test_session_attendees')
+    .select('username')
+    .eq('session_id', sessionId);
+
+  if (error) {
+    console.error('fetchAttendees error:', error);
+    return [];
+  }
+
+  return (data ?? []).map((row) => row.username);
 }
 
 function rowToTestCase(row: Record<string, unknown>): TestCase {
@@ -99,8 +113,10 @@ export async function GET(
     .select('*')
     .eq('session_id', id);
 
+  const attendees = await fetchAttendees(db, id);
+
   const detail: TestSessionDetail = {
-    ...rowToTestSession(sessionRow as Record<string, unknown>),
+    ...rowToTestSession(sessionRow as Record<string, unknown>, attendees),
     testCases: (testCasesRows ?? []).map((r) => rowToTestCase(r as Record<string, unknown>)),
     permutations: (permutationsRows ?? []).map((r) => rowToTestPermutation(r as Record<string, unknown>)),
     results: (resultsRows ?? []).map((r) => rowToTestResult(r as Record<string, unknown>)),
@@ -158,25 +174,43 @@ export async function PUT(
   if (goal !== undefined) updates.goal = goal ?? null;
   if (notes !== undefined) updates.notes = notes ?? null;
   if (signedOff !== undefined) updates.signed_off = signedOff;
-  if (attendees !== undefined) updates.attendees = attendees;
 
-  if (Object.keys(updates).length === 0) {
+  if (Object.keys(updates).length === 0 && attendees === undefined) {
     return Response.json({ error: 'No fields to update' }, { status: 400 });
   }
 
-  const { data: updatedRow, error } = await db
+  if (Object.keys(updates).length > 0) {
+    const { error } = await db.from('test_sessions').update(updates).eq('id', id);
+    if (error) {
+      console.error('PUT /api/group-testing/[id] error:', error);
+      return Response.json({ error: 'Internal server error', details: error.message }, { status: 500 });
+    }
+  }
+
+  if (attendees !== undefined) {
+    await db.from('test_session_attendees').delete().eq('session_id', id);
+    if (attendees.length > 0) {
+      const attendeesData = attendees.map((username) => ({ session_id: id, username }));
+      const { error: attendeesError } = await db.from('test_session_attendees').insert(attendeesData);
+      if (attendeesError) {
+        console.error('PUT /api/group-testing/[id] attendees error:', attendeesError);
+      }
+    }
+  }
+
+  const { data: updatedRow, error: fetchError } = await db
     .from('test_sessions')
-    .update(updates)
+    .select('*')
     .eq('id', id)
-    .select()
     .single();
 
-  if (error) {
-    console.error('PUT /api/group-testing/[id] error:', error);
+  if (fetchError || !updatedRow) {
+    console.error('PUT /api/group-testing/[id] fetch error:', fetchError);
     return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 
-  const item = rowToTestSession(updatedRow as Record<string, unknown>);
+  const updatedAttendees = await fetchAttendees(db, id);
+  const item = rowToTestSession(updatedRow as Record<string, unknown>, updatedAttendees);
   return Response.json({ item });
 }
 

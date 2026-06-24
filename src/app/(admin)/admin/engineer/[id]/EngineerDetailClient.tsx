@@ -59,9 +59,18 @@ export function EngineerDetailClient({ engineerId, initialPeriod }: Props) {
     } finally {
       setLoading(false);
     }
-  }, [engineerId, selectedPeriod]);
+  }, [
+    engineerId,
+    selectedPeriod,
+    setAdminRatings,
+    setAdminOverallNote,
+    setAdminCreatedAt,
+    setSelfAssessment,
+    setLoading,
+  ]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAssessments();
   }, [loadAssessments]);
 

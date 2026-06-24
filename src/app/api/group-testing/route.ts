@@ -1,9 +1,9 @@
 import type { NextRequest } from 'next/server';
 import { getAuth } from '@/lib/auth';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
-import type { TestSession, TestResultStatus } from '@/lib/types';
+import type { TestSession } from '@/lib/types';
 
-function rowToTestSession(row: Record<string, unknown>): TestSession {
+function rowToTestSession(row: Record<string, unknown>, attendees: string[] = []): TestSession {
   return {
     id: row.id as string,
     title: row.title as string,
@@ -13,19 +13,37 @@ function rowToTestSession(row: Record<string, unknown>): TestSession {
     notes: (row.notes as string | null) ?? undefined,
     signedOff: row.signed_off as boolean,
     createdBy: row.created_by as string,
-    attendees: row.attendees as string[],
+    attendees,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
+}
+
+async function fetchAttendeesMap(db: ReturnType<typeof createSupabaseAdminClient>, sessionIds: string[]) {
+  if (sessionIds.length === 0) return {} as Record<string, string[]>;
+  const { data, error } = await db
+    .from('test_session_attendees')
+    .select('session_id, username')
+    .in('session_id', sessionIds);
+
+  if (error) {
+    console.error('fetchAttendeesMap error:', error);
+    return {} as Record<string, string[]>;
+  }
+
+  return (data ?? []).reduce((acc, row) => {
+    if (!acc[row.session_id]) acc[row.session_id] = [];
+    acc[row.session_id].push(row.username);
+    return acc;
+  }, {} as Record<string, string[]>);
 }
 
 // ── GET /api/group-testing ───────────────────────────────────────────────────
 // Returns all test sessions. Accessible to any authenticated user.
 
 export async function GET() {
-  let auth;
   try {
-    auth = await getAuth();
+    await getAuth();
   } catch {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -41,7 +59,9 @@ export async function GET() {
     return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 
-  const items = (rows ?? []).map((r) => rowToTestSession(r as Record<string, unknown>));
+  const sessionRows = (rows ?? []) as Record<string, unknown>[];
+  const attendeeMap = await fetchAttendeesMap(db, sessionRows.map((r) => r.id as string));
+  const items = sessionRows.map((r) => rowToTestSession(r, attendeeMap[r.id as string] ?? []));
   return Response.json({ items });
 }
 
@@ -85,17 +105,25 @@ export async function POST(request: NextRequest) {
       notes: notes ?? null,
       signed_off: false,
       created_by: auth.username,
-      attendees,
     })
     .select()
     .single();
 
   if (sessionError) {
     console.error('POST /api/group-testing session error:', sessionError);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: 'Internal server error', details: sessionError.message }, { status: 500 });
   }
 
   const sessionId = sessionRow.id as string;
+
+  // Insert attendees
+  if (attendees.length > 0) {
+    const attendeesData = attendees.map((username) => ({ session_id: sessionId, username }));
+    const { error: attendeesError } = await db.from('test_session_attendees').insert(attendeesData);
+    if (attendeesError) {
+      console.error('POST /api/group-testing attendees error:', attendeesError);
+    }
+  }
 
   // Insert test cases if provided
   if (testCases.length > 0) {
@@ -127,6 +155,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const item = rowToTestSession(sessionRow as Record<string, unknown>);
+  const attendeeMap = await fetchAttendeesMap(db, [sessionId]);
+  const item = rowToTestSession(sessionRow as Record<string, unknown>, attendeeMap[sessionId] ?? []);
   return Response.json({ item }, { status: 201 });
 }

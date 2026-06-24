@@ -40,10 +40,6 @@ export default function BacklogPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError]   = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchAll();
-  }, []);
-
   const fetchAll = async () => {
     try {
       const [backlogRes, sessionsRes] = await Promise.all([
@@ -58,6 +54,11 @@ export default function BacklogPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchAll();
+  }, []);
 
   const openModal = () => {
     setForm(EMPTY_FORM);
@@ -127,7 +128,7 @@ export default function BacklogPage() {
             <h1 className="text-2xl font-semibold text-white">Topic Backlog</h1>
           </div>
           <p className="text-white/60">
-            A running list to pull from. Mix categories week to week so it doesn't become all-AI or all-deep-dives in a row.
+            A running list to pull from. Mix categories week to week so it doesn&apos;t become all-AI or all-deep-dives in a row.
           </p>
         </div>
         <button

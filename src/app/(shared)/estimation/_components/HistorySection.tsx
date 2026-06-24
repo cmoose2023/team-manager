@@ -1,6 +1,6 @@
 'use client';
 
-import { HistoryEntry, LEVEL_LABELS, QA_LABELS } from './constants';
+import { HistoryEntry } from './constants';
 
 interface HistorySectionProps {
   history: HistoryEntry[];

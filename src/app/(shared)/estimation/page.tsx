@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { RotateCcw } from 'lucide-react';
 import {
   EstimatorHeader,
@@ -26,6 +26,7 @@ export default function StoryPointsEstimator() {
   const [qaChecked, setQaChecked] = useState<boolean[]>(new Array(9).fill(false));
   const [testScore, setTestScore] = useState<number | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
+  const [nextId, setNextId] = useState(1);
 
   // Derived values
   const depOpen = depChecked.filter((c) => !c).length;
@@ -67,7 +68,7 @@ export default function StoryPointsEstimator() {
   const addToHistory = () => {
     if (!result) return;
     const entry: HistoryEntry = {
-      id: Date.now(),
+      id: nextId,
       pts: result.pts,
       size: result.size,
       vol: LEVEL_LABELS[scores.vol!],
@@ -76,6 +77,7 @@ export default function StoryPointsEstimator() {
       qa: QA_LABELS[testScore!],
       dep: depOpen === 0 ? 'Clear' : `${depOpen} open`,
     };
+    setNextId((n) => n + 1);
     setHistory((p) => [entry, ...p]);
     resetAll();
   };

@@ -1,7 +1,7 @@
 'use client';
 
 import { ChecklistItem } from './ChecklistItem';
-import { Dimension, Scores, DIMENSION_CONFIG, LEVEL_LABELS } from './constants';
+import { Dimension, DIMENSION_CONFIG } from './constants';
 
 interface DimensionSectionProps {
   dimension: Dimension;

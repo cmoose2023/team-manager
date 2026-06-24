@@ -1,7 +1,7 @@
 'use client';
 
 import { ChecklistItem } from './ChecklistItem';
-import { QA_ITEMS, TEST_OPTIONS, QA_LABELS } from './constants';
+import { QA_ITEMS, TEST_OPTIONS } from './constants';
 
 interface TestingSectionProps {
   checked: boolean[];

@@ -32,6 +32,7 @@ export default function AdminDashboard() {
   // Load assessments when selected period changes
   useEffect(() => {
     if (!selectedPeriod) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAssessments([]);
       return;
     }

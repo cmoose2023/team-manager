@@ -53,7 +53,10 @@ export default function FeHuddlePage() {
     }
   }, []);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchAll();
+  }, [fetchAll]);
 
   const startEdit = (session: KnowledgeShareSession, engList: Engineer[]) => {
     const existingEng = engList.find((e) => e.id === session.presenterId);
