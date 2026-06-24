@@ -26,6 +26,14 @@
   --color-status-yellow: #F59E0B;
   --color-status-yellow-dim: rgba(245, 158, 11, 0.2);
 
+  /* Rating pill colors */
+  --color-rating-red: #e03030;
+  --color-rating-red-light: rgba(224, 48, 48, 0.1);
+  --color-rating-yellow: #F59E0B;
+  --color-rating-yellow-light: rgba(245, 158, 11, 0.1);
+  --color-rating-green: #16A34A;
+  --color-rating-green-light: rgba(22, 163, 74, 0.1);
+
   /* Font */
   --font-sans: var(--font-inter);
 }
