@@ -30,12 +30,15 @@ function baseUrl(): string {
   return url.replace(/\/$/, '');
 }
 
-async function jiraFetch<T>(path: string): Promise<T> {
+async function jiraFetch<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${baseUrl()}${path}`, {
+    method: body ? 'POST' : 'GET',
     headers: {
       Authorization: authHeader(),
       Accept: 'application/json',
+      ...(body ? { 'Content-Type': 'application/json' } : {}),
     },
+    body: body ? JSON.stringify(body) : undefined,
     cache: 'no-store',
   });
   if (!res.ok) {
@@ -60,8 +63,6 @@ export async function getClosedSprints(boardId: number, maxResults = 6): Promise
 }
 
 export async function searchIssues(jql: string): Promise<JiraIssue[]> {
-  const fields = 'summary,status,issuetype,assignee,story_points,customfield_10016';
-  const encoded = encodeURIComponent(jql);
   const data = await jiraFetch<{
     issues: Array<{
       key: string;
@@ -73,7 +74,11 @@ export async function searchIssues(jql: string): Promise<JiraIssue[]> {
         customfield_10016: number | null;
       };
     }>;
-  }>(`/rest/api/3/search?jql=${encoded}&fields=${fields}&maxResults=200`);
+  }>('/rest/api/3/search/jql', {
+    jql,
+    fields: ['summary', 'status', 'issuetype', 'assignee', 'customfield_10016'],
+    maxResults: 200,
+  });
 
   return data.issues.map((issue) => ({
     key: issue.key,
