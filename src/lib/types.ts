@@ -30,6 +30,8 @@ export interface Engineer {
   id: string;
   name: string;
   level: EngineerLevel;
+  /** Jira Cloud account ID — find in Jira user management or profile URL */
+  jiraAccountId?: string;
 }
 
 export interface AuthPayload {

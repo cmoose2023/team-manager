@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardCheck, FlaskConical, Calculator, Presentation } from 'lucide-react';
+import { ClipboardCheck, FlaskConical, Calculator, Presentation, BarChart2 } from 'lucide-react';
 
 interface NavItem {
   label: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   adminHref: string;
   engineerHref: string;
+  adminOnly?: boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -36,6 +37,13 @@ const NAV_ITEMS: NavItem[] = [
     adminHref: '/fe-huddle',
     engineerHref: '/fe-huddle',
   },
+  {
+    label: 'Workload',
+    icon: BarChart2,
+    adminHref: '/admin/workload',
+    engineerHref: '',
+    adminOnly: true,
+  },
 ];
 
 interface SidebarProps {
@@ -54,7 +62,7 @@ export function Sidebar({ open, isAdmin }: SidebarProps) {
       ].join(' ')}
     >
       <nav className="flex-1 py-3">
-        {NAV_ITEMS.map(({ label, icon: Icon, adminHref, engineerHref }) => {
+        {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map(({ label, icon: Icon, adminHref, engineerHref }) => {
           const href = isAdmin ? adminHref : engineerHref;
           const isActive = pathname.startsWith(adminHref) || pathname.startsWith(engineerHref);
 
