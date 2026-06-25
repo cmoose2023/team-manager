@@ -82,13 +82,9 @@ function extractStoryPoints(fields: Record<string, unknown>): number | null {
   return null;
 }
 
-/** Returns raw Jira response for debugging — requests all relevant fields explicitly */
-export async function searchIssuesRaw(jql: string, maxResults = 3): Promise<unknown> {
-  return jiraFetch<unknown>('/rest/api/3/search/jql', {
-    jql,
-    maxResults,
-    fields: ['summary', 'assignee', 'status', 'customfield_10016', 'customfield_10028', 'customfield_10014', 'story_points'],
-  });
+/** Returns all Jira fields — use to find the story points field ID */
+export async function getAllFields(): Promise<Array<{ id: string; name: string; schema?: { type: string } }>> {
+  return jiraFetch<Array<{ id: string; name: string; schema?: { type: string } }>>('/rest/api/3/field');
 }
 
 export async function searchIssues(jql: string): Promise<JiraIssue[]> {
