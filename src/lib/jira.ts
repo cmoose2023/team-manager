@@ -82,13 +82,9 @@ function extractStoryPoints(fields: Record<string, unknown>): number | null {
   return null;
 }
 
-/** Returns raw Jira fields for the first N issues — use for debugging field names */
-export async function searchIssuesRaw(jql: string, maxResults = 1): Promise<Array<{ key: string; fields: Record<string, unknown> }>> {
-  const data = await jiraFetch<{ issues: Array<{ key: string; fields: Record<string, unknown> }> }>(
-    '/rest/api/3/search/jql',
-    { jql, maxResults },
-  );
-  return data.issues;
+/** Returns raw Jira response for debugging */
+export async function searchIssuesRaw(jql: string, maxResults = 3): Promise<unknown> {
+  return jiraFetch<unknown>('/rest/api/3/search/jql', { jql, maxResults });
 }
 
 export async function searchIssues(jql: string): Promise<JiraIssue[]> {

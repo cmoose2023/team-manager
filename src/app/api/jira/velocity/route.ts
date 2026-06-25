@@ -39,26 +39,14 @@ export async function GET(request: NextRequest): Promise<Response> {
     const sprints = await getClosedSprints(boardId, 6);
     const accountIds = engineersWithJira.map((e) => `"${e.jiraAccountId}"`).join(',');
 
-    // Debug mode: return raw fields + assignee info from the most recent sprint
+    // Debug mode: dump raw Jira response for the most recent sprint
     if (debug && sprints.length > 0) {
       const sprint = sprints[0];
-      // Fetch any issue in the sprint to see fields + real assignee accountIds
-      const anyIssue = await searchIssuesRaw(`sprint = ${sprint.id}`, 3);
-      // Also try with the assignee filter so we can see if IDs match
-      const filteredIssues = await searchIssuesRaw(`sprint = ${sprint.id} AND assignee in (${accountIds})`, 1);
+      const raw = await searchIssuesRaw(`sprint = ${sprint.id}`);
       return Response.json({
         sprint,
         configuredAccountIds: engineersWithJira.map((e) => ({ name: e.name, id: e.jiraAccountId })),
-        sampleIssuesFromSprint: anyIssue.map((i) => ({
-          key: i.key,
-          assignee: (i.fields.assignee as { accountId?: string; displayName?: string } | null),
-          storyPointFields: {
-            customfield_10016: i.fields.customfield_10016,
-            customfield_10028: i.fields.customfield_10028,
-            customfield_10014: i.fields.customfield_10014,
-          },
-        })),
-        filteredMatchCount: filteredIssues.length,
+        rawJiraResponse: raw,
       });
     }
 
