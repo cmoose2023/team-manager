@@ -16,15 +16,13 @@ export interface VelocitySprintEntry {
 }
 
 export async function GET(): Promise<Response> {
+  let auth;
   try {
-    await getAuth().then((auth) => {
-      if (!auth.isAdmin) throw new Error('forbidden');
-    });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : '';
-    if (msg === 'forbidden') return Response.json({ error: 'Forbidden' }, { status: 403 });
+    auth = await getAuth();
+  } catch {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!auth.isAdmin) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   const boardId = Number(process.env.JIRA_BOARD_ID);
   if (!boardId) return Response.json({ error: 'JIRA_BOARD_ID not configured' }, { status: 500 });
@@ -56,7 +54,8 @@ export async function GET(): Promise<Response> {
 
     return Response.json({ sprints: velocityData });
   } catch (e) {
-    console.error('GET /api/jira/velocity error:', e);
-    return Response.json({ error: 'Failed to fetch Jira velocity data' }, { status: 500 });
+    const detail = e instanceof Error ? e.message : String(e);
+    console.error('GET /api/jira/velocity error:', detail);
+    return Response.json({ error: 'Failed to fetch Jira velocity data', detail }, { status: 500 });
   }
 }

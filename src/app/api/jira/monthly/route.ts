@@ -13,15 +13,13 @@ export interface MonthlyEngineerData {
 }
 
 export async function GET(request: NextRequest): Promise<Response> {
+  let auth;
   try {
-    await getAuth().then((auth) => {
-      if (!auth.isAdmin) throw new Error('forbidden');
-    });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : '';
-    if (msg === 'forbidden') return Response.json({ error: 'Forbidden' }, { status: 403 });
+    auth = await getAuth();
+  } catch {
     return Response.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  if (!auth.isAdmin) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
   const { searchParams } = request.nextUrl;
   const year = Number(searchParams.get('year'));
@@ -57,7 +55,8 @@ export async function GET(request: NextRequest): Promise<Response> {
 
     return Response.json({ engineers });
   } catch (e) {
-    console.error('GET /api/jira/monthly error:', e);
-    return Response.json({ error: 'Failed to fetch Jira monthly data' }, { status: 500 });
+    const detail = e instanceof Error ? e.message : String(e);
+    console.error('GET /api/jira/monthly error:', detail);
+    return Response.json({ error: 'Failed to fetch Jira monthly data', detail }, { status: 500 });
   }
 }

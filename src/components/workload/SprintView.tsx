@@ -38,8 +38,11 @@ export function SprintView() {
 
   useEffect(() => {
     fetch('/api/jira/sprint')
-      .then((r) => {
-        if (!r.ok) throw new Error('Failed to fetch sprint data');
+      .then(async (r) => {
+        if (!r.ok) {
+          const body = await r.json().catch(() => ({})) as { detail?: string };
+          throw new Error(body.detail ?? 'Failed to fetch sprint data');
+        }
         return r.json() as Promise<SprintResponse>;
       })
       .then(setData)
