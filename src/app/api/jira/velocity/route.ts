@@ -1,7 +1,6 @@
-import type { NextRequest } from 'next/server';
 import { getAuth } from '@/lib/auth';
 import { ENGINEERS } from '@/lib/engineers';
-import { getClosedSprints, searchIssues, getAllFields } from '@/lib/jira';
+import { getClosedSprints, searchIssues } from '@/lib/jira';
 
 export interface VelocityEngineerEntry {
   engineerId: string;
@@ -16,7 +15,7 @@ export interface VelocitySprintEntry {
   totalPoints: number;
 }
 
-export async function GET(request: NextRequest): Promise<Response> {
+export async function GET(): Promise<Response> {
   let auth;
   try {
     auth = await getAuth();
@@ -33,20 +32,9 @@ export async function GET(request: NextRequest): Promise<Response> {
     return Response.json({ sprints: [] });
   }
 
-  const debug = request.nextUrl.searchParams.get('debug') === '1';
-
   try {
     const sprints = await getClosedSprints(boardId, 6);
     const accountIds = engineersWithJira.map((e) => `"${e.jiraAccountId}"`).join(',');
-
-    // Debug mode: find fields with "story" or "point" in the name
-    if (debug) {
-      const allFields = await getAllFields();
-      const storyFields = allFields.filter((f) =>
-        /story|point|sp\b/i.test(f.name),
-      );
-      return Response.json({ storyRelatedFields: storyFields });
-    }
 
     const velocityData: VelocitySprintEntry[] = await Promise.all(
       sprints.map(async (sprint) => {

@@ -69,10 +69,9 @@ export async function getClosedSprints(boardId: number, count = 6): Promise<Jira
   return [...data.values].reverse(); // newest first
 }
 
-// customfield_10016 = "Story Points" (classic projects)
-// customfield_10028 = "Story point estimate" (next-gen / team-managed projects)
-// customfield_10014 = "Story Points" (some older Jira configurations)
-const STORY_POINT_FIELDS = ['customfield_10016', 'customfield_10028', 'customfield_10014'];
+// customfield_10004  = "Story Points" (classic/company-managed projects)
+// customfield_13507  = "Story point estimate" (team-managed / next-gen projects)
+const STORY_POINT_FIELDS = ['customfield_10004', 'customfield_13507'];
 
 function extractStoryPoints(fields: Record<string, unknown>): number | null {
   for (const field of STORY_POINT_FIELDS) {
@@ -82,10 +81,6 @@ function extractStoryPoints(fields: Record<string, unknown>): number | null {
   return null;
 }
 
-/** Returns all Jira fields — use to find the story points field ID */
-export async function getAllFields(): Promise<Array<{ id: string; name: string; schema?: { type: string } }>> {
-  return jiraFetch<Array<{ id: string; name: string; schema?: { type: string } }>>('/rest/api/3/field');
-}
 
 export async function searchIssues(jql: string): Promise<JiraIssue[]> {
   const data = await jiraFetch<{
@@ -100,7 +95,7 @@ export async function searchIssues(jql: string): Promise<JiraIssue[]> {
     }>;
   }>('/rest/api/3/search/jql', {
     jql,
-    fields: ['summary', 'status', 'issuetype', 'assignee', 'story_points', ...STORY_POINT_FIELDS],
+    fields: ['summary', 'status', 'issuetype', 'assignee', ...STORY_POINT_FIELDS],
     maxResults: 200,
   });
 
