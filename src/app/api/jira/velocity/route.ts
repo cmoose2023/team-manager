@@ -1,6 +1,7 @@
+import type { NextRequest } from 'next/server';
 import { getAuth } from '@/lib/auth';
 import { ENGINEERS } from '@/lib/engineers';
-import { getClosedSprints, searchIssues } from '@/lib/jira';
+import { getClosedSprints, searchIssues, searchIssuesRaw } from '@/lib/jira';
 
 export interface VelocityEngineerEntry {
   engineerId: string;
@@ -15,7 +16,7 @@ export interface VelocitySprintEntry {
   totalPoints: number;
 }
 
-export async function GET(): Promise<Response> {
+export async function GET(request: NextRequest): Promise<Response> {
   let auth;
   try {
     auth = await getAuth();
@@ -32,9 +33,18 @@ export async function GET(): Promise<Response> {
     return Response.json({ sprints: [] });
   }
 
+  const debug = request.nextUrl.searchParams.get('debug') === '1';
+
   try {
     const sprints = await getClosedSprints(boardId, 6);
     const accountIds = engineersWithJira.map((e) => `"${e.jiraAccountId}"`).join(',');
+
+    // Debug mode: return raw fields from one issue in the most recent sprint
+    if (debug && sprints.length > 0) {
+      const jql = `sprint = ${sprints[0].id} AND assignee in (${accountIds})`;
+      const raw = await searchIssuesRaw(jql, 1);
+      return Response.json({ debugFields: raw[0]?.fields ?? null, sprint: sprints[0] });
+    }
 
     const velocityData: VelocitySprintEntry[] = await Promise.all(
       sprints.map(async (sprint) => {

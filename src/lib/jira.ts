@@ -55,16 +55,24 @@ export async function getActiveSprint(boardId: number): Promise<JiraSprint | nul
   return data.values[0] ?? null;
 }
 
-export async function getClosedSprints(boardId: number, maxResults = 6): Promise<JiraSprint[]> {
-  const data = await jiraFetch<{ values: JiraSprint[] }>(
-    `/rest/agile/1.0/board/${boardId}/sprint?state=closed&maxResults=${maxResults}`,
+export async function getClosedSprints(boardId: number, count = 6): Promise<JiraSprint[]> {
+  // Fetch 1 item first to get the total, then page to the end
+  const probe = await jiraFetch<{ total: number }>(
+    `/rest/agile/1.0/board/${boardId}/sprint?state=closed&maxResults=1`,
   );
-  return data.values.reverse();
+  const total = probe.total ?? 0;
+  if (total === 0) return [];
+  const startAt = Math.max(0, total - count);
+  const data = await jiraFetch<{ values: JiraSprint[] }>(
+    `/rest/agile/1.0/board/${boardId}/sprint?state=closed&startAt=${startAt}&maxResults=${count}`,
+  );
+  return [...data.values].reverse(); // newest first
 }
 
 // customfield_10016 = "Story Points" (classic projects)
 // customfield_10028 = "Story point estimate" (next-gen / team-managed projects)
-const STORY_POINT_FIELDS = ['customfield_10016', 'customfield_10028'];
+// customfield_10014 = "Story Points" (some older Jira configurations)
+const STORY_POINT_FIELDS = ['customfield_10016', 'customfield_10028', 'customfield_10014'];
 
 function extractStoryPoints(fields: Record<string, unknown>): number | null {
   for (const field of STORY_POINT_FIELDS) {
@@ -72,6 +80,15 @@ function extractStoryPoints(fields: Record<string, unknown>): number | null {
     if (typeof val === 'number' && val > 0) return val;
   }
   return null;
+}
+
+/** Returns raw Jira fields for the first N issues — use for debugging field names */
+export async function searchIssuesRaw(jql: string, maxResults = 1): Promise<Array<{ key: string; fields: Record<string, unknown> }>> {
+  const data = await jiraFetch<{ issues: Array<{ key: string; fields: Record<string, unknown> }> }>(
+    '/rest/api/3/search/jql',
+    { jql, maxResults },
+  );
+  return data.issues;
 }
 
 export async function searchIssues(jql: string): Promise<JiraIssue[]> {
@@ -87,7 +104,7 @@ export async function searchIssues(jql: string): Promise<JiraIssue[]> {
     }>;
   }>('/rest/api/3/search/jql', {
     jql,
-    fields: ['summary', 'status', 'issuetype', 'assignee', ...STORY_POINT_FIELDS],
+    fields: ['summary', 'status', 'issuetype', 'assignee', 'story_points', ...STORY_POINT_FIELDS],
     maxResults: 200,
   });
 
