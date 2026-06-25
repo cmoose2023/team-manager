@@ -38,7 +38,7 @@ export async function GET(): Promise<Response> {
 
     const velocityData: VelocitySprintEntry[] = await Promise.all(
       sprints.map(async (sprint) => {
-        const jql = `sprint = ${sprint.id} AND assignee in (${accountIds}) AND status in ("Done", "Closed", "Resolved", "Complete", "Completed")`;
+        const jql = `sprint = ${sprint.id} AND assignee in (${accountIds})`;
         const issues = await searchIssues(jql);
 
         const engineers: VelocityEngineerEntry[] = engineersWithJira.map((e) => {

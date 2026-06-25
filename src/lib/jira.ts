@@ -62,21 +62,32 @@ export async function getClosedSprints(boardId: number, maxResults = 6): Promise
   return data.values.reverse();
 }
 
+// customfield_10016 = "Story Points" (classic projects)
+// customfield_10028 = "Story point estimate" (next-gen / team-managed projects)
+const STORY_POINT_FIELDS = ['customfield_10016', 'customfield_10028'];
+
+function extractStoryPoints(fields: Record<string, unknown>): number | null {
+  for (const field of STORY_POINT_FIELDS) {
+    const val = fields[field];
+    if (typeof val === 'number' && val > 0) return val;
+  }
+  return null;
+}
+
 export async function searchIssues(jql: string): Promise<JiraIssue[]> {
   const data = await jiraFetch<{
     issues: Array<{
       key: string;
-      fields: {
+      fields: Record<string, unknown> & {
         summary: string;
         status: { name: string };
         issuetype: { name: string };
         assignee: { accountId: string } | null;
-        customfield_10016: number | null;
       };
     }>;
   }>('/rest/api/3/search/jql', {
     jql,
-    fields: ['summary', 'status', 'issuetype', 'assignee', 'customfield_10016'],
+    fields: ['summary', 'status', 'issuetype', 'assignee', ...STORY_POINT_FIELDS],
     maxResults: 200,
   });
 
@@ -86,6 +97,6 @@ export async function searchIssues(jql: string): Promise<JiraIssue[]> {
     status: issue.fields.status.name,
     issueType: issue.fields.issuetype.name,
     assigneeAccountId: issue.fields.assignee?.accountId ?? null,
-    storyPoints: issue.fields.customfield_10016 ?? null,
+    storyPoints: extractStoryPoints(issue.fields),
   }));
 }
