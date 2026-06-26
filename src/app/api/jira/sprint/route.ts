@@ -1,5 +1,5 @@
 import { getAuth } from '@/lib/auth';
-import { ENGINEERS } from '@/lib/engineers';
+import { getEngineers } from '@/lib/engineers';
 import { getActiveSprint, searchIssues, type JiraIssue, type JiraSprint } from '@/lib/jira';
 
 export interface EngineerSprintData {
@@ -28,7 +28,8 @@ export async function GET(): Promise<Response> {
   try {
     const sprint = await getActiveSprint(boardId);
 
-    const engineersWithJira = ENGINEERS.filter((e) => e.jiraAccountId);
+    const allEngineers = await getEngineers();
+    const engineersWithJira = allEngineers.filter((e) => e.jiraAccountId);
     let engineers: EngineerSprintData[] = engineersWithJira.map((e) => ({
       engineerId: e.id,
       engineerName: e.name,

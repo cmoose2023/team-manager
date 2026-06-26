@@ -2,17 +2,17 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { getEngineerById } from '@/lib/engineers';
 import { levelLabel } from '@/lib/matrix';
 import {
   getCurrentUsername,
   fetchPeriods,
+  fetchProfile,
   fetchEngineerAssessments,
   saveAssessment,
 } from '@/lib/api';
 import { AssessmentMatrix } from '@/components/AssessmentMatrix';
 import { PeriodSelector } from '@/components/PeriodSelector';
-import type { Assessment, Ratings } from '@/lib/types';
+import type { Assessment, Profile, Ratings } from '@/lib/types';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -22,6 +22,7 @@ interface Props {
 
 export function SelfAssessmentClient({ initialPeriod }: Props) {
   const [username, setUsername] = useState('');
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [periods, setPeriods] = useState<string[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState(initialPeriod);
 
@@ -39,16 +40,18 @@ export function SelfAssessmentClient({ initialPeriod }: Props) {
   const [loadingAssessments, setLoadingAssessments] = useState(false);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
-  // Bootstrap: username + periods
+  // Bootstrap: username + periods + profile
   useEffect(() => {
     async function init() {
       try {
-        const [uname, ps] = await Promise.all([
-          getCurrentUsername(),
-          fetchPeriods(),
-        ]);
+        const uname = await getCurrentUsername();
         setUsername(uname);
+        const [ps, prof] = await Promise.all([
+          fetchPeriods(),
+          fetchProfile(uname).catch(() => null),
+        ]);
         setPeriods(ps);
+        setProfile(prof);
         if (!initialPeriod && ps.length > 0) setSelectedPeriod(ps[0]);
       } catch (err) {
         console.error(err);
@@ -104,9 +107,8 @@ export function SelfAssessmentClient({ initialPeriod }: Props) {
     }
   }
 
-  const engineer = username ? getEngineerById(username) : undefined;
   const isLoading = loadingInit || loadingAssessments;
-  const isPrincipal = engineer?.level === 'PRINCIPAL_IC';
+  const isPrincipal = profile?.level === 'PRINCIPAL_IC';
 
   return (
     <div>
@@ -123,7 +125,7 @@ export function SelfAssessmentClient({ initialPeriod }: Props) {
           <h1 className="text-xl font-semibold text-brand-grey-dark">
             Self-Assessment
           </h1>
-          {engineer && (
+          {profile?.level && (
             <span
               className={[
                 'text-xs font-semibold px-2.5 py-1 rounded-full',
@@ -132,7 +134,7 @@ export function SelfAssessmentClient({ initialPeriod }: Props) {
                   : 'bg-brand-grey-light text-brand-grey',
               ].join(' ')}
             >
-              {levelLabel(engineer.level)}
+              {levelLabel(profile.level)}
             </span>
           )}
         </div>
@@ -173,7 +175,7 @@ export function SelfAssessmentClient({ initialPeriod }: Props) {
           <div className="h-96 bg-gray-100 rounded-lg animate-pulse" />
           <div className="h-20 bg-gray-100 rounded-lg animate-pulse" />
         </div>
-      ) : !selectedPeriod || !engineer ? (
+      ) : !selectedPeriod || !profile?.level ? (
         <div className="rounded-lg border-2 border-dashed border-gray-200 py-16 text-center">
           <p className="text-sm text-brand-grey">
             Select a review period to begin your self-assessment.
@@ -186,7 +188,7 @@ export function SelfAssessmentClient({ initialPeriod }: Props) {
           </div>
 
           <AssessmentMatrix
-            level={engineer.level}
+            level={profile.level}
             ratings={selfRatings}
             adminRatings={adminAssessment?.ratings}
             mode="self-edit"

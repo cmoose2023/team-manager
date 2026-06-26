@@ -1,24 +1,26 @@
 import { NextResponse } from 'next/server';
 import { createSupabaseAdminClient } from '@/lib/supabase-server';
-import { ENGINEERS } from '@/lib/engineers';
 
-// GET /api/knowledge-share/engineers - List engineers with their Supabase UUIDs
+// GET /api/knowledge-share/engineers - List active engineers with their Supabase UUIDs
 export async function GET() {
   try {
-    const supabase = createSupabaseAdminClient();
-    const { data, error } = await supabase.auth.admin.listUsers();
+    const db = createSupabaseAdminClient();
+    const { data, error } = await db
+      .from('profiles')
+      .select('username, first_name, last_name, auth_user_id')
+      .eq('is_admin', false)
+      .eq('active', true)
+      .order('last_name');
 
-    if (error || !data?.users) {
-      // Fallback: return engineers without UUIDs (presenterId will be omitted)
-      return NextResponse.json({
-        engineers: ENGINEERS.map((e) => ({ id: null, username: e.id, name: e.name })),
-      });
+    if (error || !data) {
+      return NextResponse.json({ error: 'Failed to fetch engineers' }, { status: 500 });
     }
 
-    const engineers = ENGINEERS.map((eng) => {
-      const user = data.users.find((u) => u.user_metadata?.username === eng.id);
-      return { id: user?.id ?? null, username: eng.id, name: eng.name };
-    });
+    const engineers = data.map((row) => ({
+      id: row.auth_user_id ?? null,
+      username: row.username as string,
+      name: `${row.first_name as string} ${row.last_name as string}`.trim(),
+    }));
 
     return NextResponse.json({ engineers });
   } catch (err) {

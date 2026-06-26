@@ -1,6 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { getAuth } from '@/lib/auth';
-import { ENGINEERS } from '@/lib/engineers';
+import { getEngineers } from '@/lib/engineers';
 import { searchIssues, type JiraIssue } from '@/lib/jira';
 
 const DONE_STATUSES = new Set(['Done', 'Closed', 'Resolved', 'Complete', 'Completed']);
@@ -29,7 +29,8 @@ export async function GET(request: NextRequest): Promise<Response> {
     return Response.json({ error: 'year and month query params are required' }, { status: 400 });
   }
 
-  const engineersWithJira = ENGINEERS.filter((e) => e.jiraAccountId);
+  const allEngineers = await getEngineers();
+  const engineersWithJira = allEngineers.filter((e) => e.jiraAccountId);
   if (engineersWithJira.length === 0) {
     return Response.json({ engineers: [] });
   }

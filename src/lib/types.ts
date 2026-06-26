@@ -40,6 +40,23 @@ export interface AuthPayload {
   isAdmin: boolean;
 }
 
+export interface Profile {
+  username: string;
+  authUserId: string | null;
+  firstName: string;
+  lastName: string;
+  email: string;
+  title: string | null;
+  manager: string | null;
+  startDate: string | null;
+  level: EngineerLevel | null;
+  jiraAccountId: string | null;
+  isAdmin: boolean;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Group Testing Scheduler ────────────────────────────────────────────────────
 
 export type TestResultStatus = 'pending' | 'pass' | 'fail' | 'skip';

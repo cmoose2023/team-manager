@@ -2,12 +2,11 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { getEngineerById } from '@/lib/engineers';
 import { levelLabel } from '@/lib/matrix';
-import { fetchPeriods, fetchEngineerAssessments, saveAssessment } from '@/lib/api';
+import { fetchPeriods, fetchProfile, fetchEngineerAssessments, saveAssessment } from '@/lib/api';
 import { AssessmentMatrix } from '@/components/AssessmentMatrix';
 import { PeriodSelector } from '@/components/PeriodSelector';
-import type { Assessment, Ratings } from '@/lib/types';
+import type { Assessment, Profile, Ratings } from '@/lib/types';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
@@ -17,8 +16,7 @@ interface Props {
 }
 
 export function EngineerDetailClient({ engineerId, initialPeriod }: Props) {
-  const engineer = getEngineerById(engineerId);
-
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [periods, setPeriods] = useState<string[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState(initialPeriod);
 
@@ -34,13 +32,15 @@ export function EngineerDetailClient({ engineerId, initialPeriod }: Props) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
 
   useEffect(() => {
-    fetchPeriods()
-      .then((ps) => {
-        setPeriods(ps);
-        if (!initialPeriod && ps.length > 0) setSelectedPeriod(ps[0]);
-      })
-      .catch(console.error);
-  }, [initialPeriod]);
+    Promise.all([
+      fetchPeriods(),
+      fetchProfile(engineerId).catch(() => null),
+    ]).then(([ps, prof]) => {
+      setPeriods(ps);
+      setProfile(prof);
+      if (!initialPeriod && ps.length > 0) setSelectedPeriod(ps[0]);
+    }).catch(console.error);
+  }, [initialPeriod, engineerId]);
 
   const loadAssessments = useCallback(async () => {
     if (!selectedPeriod) return;
@@ -94,7 +94,7 @@ export function EngineerDetailClient({ engineerId, initialPeriod }: Props) {
     }
   }
 
-  if (!engineer) {
+  if (!profile) {
     return (
       <div className="text-center py-16">
         <p className="text-brand-grey mb-3">Engineer not found.</p>
@@ -108,7 +108,8 @@ export function EngineerDetailClient({ engineerId, initialPeriod }: Props) {
     );
   }
 
-  const isPrincipal = engineer.level === 'PRINCIPAL_IC';
+  const isPrincipal = profile.level === 'PRINCIPAL_IC';
+  const engineerName = `${profile.firstName} ${profile.lastName}`.trim();
 
   return (
     <div>
@@ -123,7 +124,7 @@ export function EngineerDetailClient({ engineerId, initialPeriod }: Props) {
           </Link>
           <span className="text-gray-300 select-none">|</span>
           <h1 className="text-xl font-semibold text-brand-grey-dark">
-            {engineer.name}
+            {engineerName}
           </h1>
           <span
             className={[
@@ -133,7 +134,7 @@ export function EngineerDetailClient({ engineerId, initialPeriod }: Props) {
                 : 'bg-brand-grey-light text-brand-grey',
             ].join(' ')}
           >
-            {levelLabel(engineer.level)}
+            {levelLabel(profile.level ?? 'SENIOR_IC')}
           </span>
         </div>
 
@@ -162,7 +163,7 @@ export function EngineerDetailClient({ engineerId, initialPeriod }: Props) {
             </div>
 
             <AssessmentMatrix
-              level={engineer.level}
+              level={profile.level ?? 'SENIOR_IC'}
               ratings={adminRatings}
               mode="admin-edit"
               onChange={setAdminRatings}
@@ -195,7 +196,7 @@ export function EngineerDetailClient({ engineerId, initialPeriod }: Props) {
             {selfAssessment ? (
               <>
                 <AssessmentMatrix
-                  level={engineer.level}
+                  level={profile.level ?? 'SENIOR_IC'}
                   ratings={selfAssessment.ratings}
                   mode="view"
                 />

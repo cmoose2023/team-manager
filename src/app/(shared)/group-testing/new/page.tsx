@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Plus, Trash2 } from 'lucide-react';
-import { ENGINEERS } from '@/lib/engineers';
+import { fetchAllProfiles } from '@/lib/api';
+import type { Profile } from '@/lib/types';
 
 const CHANNELS = ['Auction', 'Retail', 'Marketplace'];
 const BROWSERS = ['Chrome', 'Firefox', 'Safari', 'Edge'];
@@ -12,6 +13,11 @@ const BROWSERS = ['Chrome', 'Firefox', 'Safari', 'Edge'];
 export default function NewSessionPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  const [engineers, setEngineers] = useState<Profile[]>([]);
+
+  useEffect(() => {
+    fetchAllProfiles('engineer').then(setEngineers).catch(console.error);
+  }, []);
 
   // Session details
   const [title, setTitle] = useState('');
@@ -168,19 +174,19 @@ export default function NewSessionPage() {
         <section className="bg-[#141414] rounded-lg border border-white/10 p-6">
           <h2 className="text-lg font-semibold text-white mb-4">Attendees</h2>
           <div className="flex flex-wrap gap-3">
-            {ENGINEERS.map((engineer) => (
+            {engineers.map((eng) => (
               <button
-                key={engineer.id}
+                key={eng.username}
                 type="button"
-                onClick={() => toggleAttendee(engineer.id)}
+                onClick={() => toggleAttendee(eng.username)}
                 className={[
                   'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
-                  attendees.includes(engineer.id)
+                  attendees.includes(eng.username)
                     ? 'bg-[#e03030] text-white'
                     : 'bg-white/10 text-white/70 hover:bg-white/20',
                 ].join(' ')}
               >
-                {engineer.name}
+                {`${eng.firstName} ${eng.lastName}`.trim()}
               </button>
             ))}
           </div>

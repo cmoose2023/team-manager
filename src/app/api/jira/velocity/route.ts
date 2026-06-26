@@ -1,5 +1,5 @@
 import { getAuth } from '@/lib/auth';
-import { ENGINEERS } from '@/lib/engineers';
+import { getEngineers } from '@/lib/engineers';
 import { getClosedSprints, searchIssues } from '@/lib/jira';
 
 export interface VelocityEngineerEntry {
@@ -27,7 +27,8 @@ export async function GET(): Promise<Response> {
   const boardId = Number(process.env.JIRA_BOARD_ID);
   if (!boardId) return Response.json({ error: 'JIRA_BOARD_ID not configured' }, { status: 500 });
 
-  const engineersWithJira = ENGINEERS.filter((e) => e.jiraAccountId);
+  const allEngineers = await getEngineers();
+  const engineersWithJira = allEngineers.filter((e) => e.jiraAccountId);
   if (engineersWithJira.length === 0) {
     return Response.json({ sprints: [] });
   }

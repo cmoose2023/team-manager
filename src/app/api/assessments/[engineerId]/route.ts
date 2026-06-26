@@ -107,7 +107,7 @@ export async function PUT(
     }
   }
 
-  const engineer = getEngineerById(engineerId);
+  const engineer = await getEngineerById(engineerId);
   if (!engineer) {
     return Response.json({ error: 'Engineer not found' }, { status: 404 });
   }

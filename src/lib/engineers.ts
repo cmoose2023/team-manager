@@ -1,12 +1,42 @@
-import { type Engineer } from './types';
+import { createSupabaseAdminClient } from './supabase-server';
+import type { Engineer, EngineerLevel } from './types';
 
-export const ENGINEERS: Engineer[] = [
-  { id: 'steven.snyder', name: 'Steven Snyder', level: 'PRINCIPAL_IC', jiraAccountId: '5fa1dbd1b45b2e007481fa68' },
-  { id: 'julia.ballo', name: 'Julia Ballo', level: 'SENIOR_IC', jiraAccountId: '712020:22be27ff-b9b2-4a7a-912d-0c1a7efbe0bf' },
-  { id: 'agnes.szigethy', name: 'Agnes Szigethy', level: 'SENIOR_IC', jiraAccountId: '712020:7409260c-a008-45cb-ae2b-0575beaac53e' },
-  { id: 'michael.murphy', name: 'Michael Murphy', level: 'PRINCIPAL_IC', jiraAccountId: '' },
-];
+function rowToEngineer(row: Record<string, unknown>): Engineer {
+  return {
+    id: row.username as string,
+    name: `${row.first_name as string} ${row.last_name as string}`.trim(),
+    level: row.level as EngineerLevel,
+    jiraAccountId: (row.jira_account_id as string | null) ?? undefined,
+  };
+}
 
-export function getEngineerById(id: string): Engineer | undefined {
-  return ENGINEERS.find((e) => e.id === id);
+/** Server-side: fetch all active non-admin engineers from the profiles table. */
+export async function getEngineers(): Promise<Engineer[]> {
+  const db = createSupabaseAdminClient();
+  const { data, error } = await db
+    .from('profiles')
+    .select('username, first_name, last_name, level, jira_account_id')
+    .eq('is_admin', false)
+    .eq('active', true)
+    .order('last_name');
+
+  if (error) {
+    console.error('getEngineers error:', error);
+    return [];
+  }
+
+  return (data ?? []).map((r) => rowToEngineer(r as Record<string, unknown>));
+}
+
+/** Server-side: fetch a single engineer profile by username. */
+export async function getEngineerById(id: string): Promise<Engineer | undefined> {
+  const db = createSupabaseAdminClient();
+  const { data, error } = await db
+    .from('profiles')
+    .select('username, first_name, last_name, level, jira_account_id')
+    .eq('username', id)
+    .single();
+
+  if (error || !data) return undefined;
+  return rowToEngineer(data as Record<string, unknown>);
 }

@@ -1,5 +1,5 @@
 import { createSupabaseBrowserClient } from './supabase';
-import type { Assessment, Ratings } from './types';
+import type { Assessment, Profile, Ratings } from './types';
 
 export async function getCurrentUsername(): Promise<string> {
   const supabase = createSupabaseBrowserClient();
@@ -33,6 +33,21 @@ export async function fetchEngineerAssessments(
   );
   if (!res.ok) throw new Error('Failed to fetch assessment');
   return res.json();
+}
+
+export async function fetchProfile(username: string): Promise<Profile> {
+  const res = await fetch(`/api/users/${encodeURIComponent(username)}`);
+  if (!res.ok) throw new Error('Failed to fetch profile');
+  const data: { item: Profile } = await res.json();
+  return data.item;
+}
+
+export async function fetchAllProfiles(role?: 'engineer' | 'admin'): Promise<Profile[]> {
+  const url = role ? `/api/users?role=${role}` : '/api/users';
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch profiles');
+  const data: { items: Profile[] } = await res.json();
+  return data.items;
 }
 
 export async function saveAssessment(

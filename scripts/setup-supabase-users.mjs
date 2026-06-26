@@ -36,27 +36,32 @@ const USERS = [
   {
     email: 'crissmoosman1@gmail.com',
     metadata: { username: 'admin', name: 'Criss Moosman', isAdmin: true },
+    profile: { level: null, jiraAccountId: null },
   },
-  // ── Engineers (match IDs in src/lib/engineers.ts) ───────────────────────────
+  // ── Engineers ───────────────────────────────────────────────────────────────
   {
     email: 'ssnyder@invaluable.com',
     metadata: { username: 'steven.snyder', name: 'Steven Snyder', isAdmin: false },
+    profile: { level: 'PRINCIPAL_IC', jiraAccountId: '5fa1dbd1b45b2e007481fa68' },
   },
   {
     email: 'jballo@invaluable.com',
     metadata: { username: 'julia.ballo', name: 'Julia Ballo', isAdmin: false },
+    profile: { level: 'SENIOR_IC', jiraAccountId: '712020:22be27ff-b9b2-4a7a-912d-0c1a7efbe0bf' },
   },
   {
     email: 'aszigethy@invaluable.com',
     metadata: { username: 'agnes.szigethy', name: 'Agnes Szigethy', isAdmin: false },
+    profile: { level: 'SENIOR_IC', jiraAccountId: '712020:7409260c-a008-45cb-ae2b-0575beaac53e' },
   },
   {
     email: 'mmurphy@invaluable.com',
     metadata: { username: 'michael.murphy', name: 'Michael Murphy', isAdmin: false },
+    profile: { level: 'PRINCIPAL_IC', jiraAccountId: '' },
   },
 ];
 
-for (const { email, metadata } of USERS) {
+for (const { email, metadata, profile } of USERS) {
   const { data, error } = await supabase.auth.admin.createUser({
     email,
     password: TEMP_PASSWORD,
@@ -70,8 +75,31 @@ for (const { email, metadata } of USERS) {
     } else {
       console.error(`✗  ${email}: ${error.message}`);
     }
+    continue;
+  }
+
+  console.log(`✓  Created ${email} (${data.user.id})`);
+
+  const nameParts = metadata.name.trim().split(' ');
+  const firstName = nameParts[0] ?? '';
+  const lastName = nameParts.slice(1).join(' ');
+
+  const { error: profileError } = await supabase.from('profiles').upsert({
+    username: metadata.username,
+    auth_user_id: data.user.id,
+    first_name: firstName,
+    last_name: lastName,
+    email,
+    is_admin: metadata.isAdmin,
+    level: profile.level ?? null,
+    jira_account_id: profile.jiraAccountId ?? null,
+    active: true,
+  }, { onConflict: 'username' });
+
+  if (profileError) {
+    console.error(`  ✗  Profile insert failed for ${metadata.username}: ${profileError.message}`);
   } else {
-    console.log(`✓  Created ${email} (${data.user.id})`);
+    console.log(`  ✓  Profile row created for ${metadata.username}`);
   }
 }
 

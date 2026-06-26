@@ -49,12 +49,20 @@ export function NavBar({ username, onMenuToggle }: NavBarProps) {
             </Link>
           </div>
 
-          {/* Right: username + sign out */}
+          {/* Right: username + profile + sign out */}
           <div className="flex items-center gap-4">
             {username && (
               <span className="text-sm text-white/60 hidden sm:block">
                 {formatUsername(username)}
               </span>
+            )}
+            {username && (
+              <Link
+                href={`/profile/${username}`}
+                className="text-sm font-medium text-white/80 hover:text-[#e03030] transition-colors"
+              >
+                Profile
+              </Link>
             )}
             <button
               onClick={handleSignOut}

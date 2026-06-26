@@ -2,13 +2,15 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { getEngineerById } from '@/lib/engineers';
 import { levelLabel } from '@/lib/matrix';
 import {
   getCurrentUsername,
   fetchPeriods,
+  fetchProfile,
   fetchEngineerAssessments,
 } from '@/lib/api';
+import type { Profile } from '@/lib/types';
+
 import { AssessmentMatrix } from '@/components/AssessmentMatrix';
 import { PeriodSelector } from '@/components/PeriodSelector';
 import type { Assessment } from '@/lib/types';
@@ -19,6 +21,7 @@ interface Props {
 
 export function DashboardClient({ initialPeriod }: Props) {
   const [username, setUsername] = useState('');
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [periods, setPeriods] = useState<string[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState(initialPeriod);
   const [adminAssessment, setAdminAssessment] = useState<Assessment | null>(
@@ -28,16 +31,18 @@ export function DashboardClient({ initialPeriod }: Props) {
   const [loadingInit, setLoadingInit] = useState(true);
   const [loadingAssessments, setLoadingAssessments] = useState(false);
 
-  // Bootstrap: get username + periods
+  // Bootstrap: get username + periods + profile
   useEffect(() => {
     async function init() {
       try {
-        const [uname, ps] = await Promise.all([
-          getCurrentUsername(),
-          fetchPeriods(),
-        ]);
+        const uname = await getCurrentUsername();
         setUsername(uname);
+        const [ps, prof] = await Promise.all([
+          fetchPeriods(),
+          fetchProfile(uname).catch(() => null),
+        ]);
         setPeriods(ps);
+        setProfile(prof);
         if (!initialPeriod && ps.length > 0) setSelectedPeriod(ps[0]);
       } catch (err) {
         console.error(err);
@@ -71,9 +76,9 @@ export function DashboardClient({ initialPeriod }: Props) {
     loadAssessments();
   }, [loadAssessments]);
 
-  const engineer = username ? getEngineerById(username) : undefined;
   const isLoading = loadingInit || loadingAssessments;
-  const isPrincipal = engineer?.level === 'PRINCIPAL_IC';
+  const isPrincipal = profile?.level === 'PRINCIPAL_IC';
+  const engineerName = profile ? `${profile.firstName} ${profile.lastName}`.trim() : '';
 
   return (
     <div>
@@ -84,7 +89,7 @@ export function DashboardClient({ initialPeriod }: Props) {
             <h1 className="text-2xl font-semibold text-white">
               My Assessments
             </h1>
-            {engineer && (
+            {profile?.level && (
               <span
                 className={[
                   'text-xs font-semibold px-2.5 py-1 rounded-full',
@@ -93,12 +98,12 @@ export function DashboardClient({ initialPeriod }: Props) {
                     : 'bg-white/10 text-white/70',
                 ].join(' ')}
               >
-                {levelLabel(engineer.level)}
+                {levelLabel(profile.level)}
               </span>
             )}
           </div>
-          {engineer && (
-            <p className="text-sm text-white/60">{engineer.name}</p>
+          {engineerName && (
+            <p className="text-sm text-white/60">{engineerName}</p>
           )}
         </div>
 
@@ -131,10 +136,10 @@ export function DashboardClient({ initialPeriod }: Props) {
             <SectionHeader title="Manager Assessment" />
             {isLoading ? (
               <SkeletonMatrix />
-            ) : adminAssessment && engineer ? (
+            ) : adminAssessment && profile?.level ? (
               <>
                 <AssessmentMatrix
-                  level={engineer.level}
+                  level={profile.level}
                   ratings={adminAssessment.ratings}
                   mode="view"
                 />
@@ -171,10 +176,10 @@ export function DashboardClient({ initialPeriod }: Props) {
             />
             {isLoading ? (
               <SkeletonMatrix />
-            ) : selfAssessment && engineer ? (
+            ) : selfAssessment && profile?.level ? (
               <>
                 <AssessmentMatrix
-                  level={engineer.level}
+                  level={profile.level}
                   ratings={selfAssessment.ratings}
                   mode="view"
                 />
