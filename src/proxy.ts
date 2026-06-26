@@ -39,7 +39,7 @@ export async function proxy(request: NextRequest) {
   // ── Authenticated on login or root → route to correct home ──────────────────
   if (pathname === '/login' || pathname === '/') {
     const isAdmin = session.user.user_metadata?.isAdmin === true;
-    return NextResponse.redirect(new URL(isAdmin ? '/admin' : '/dashboard', request.url));
+    return NextResponse.redirect(new URL(isAdmin ? '/admin/team' : '/dashboard', request.url));
   }
 
   // ── Guard /admin routes — engineers get redirected to /dashboard ─────────────

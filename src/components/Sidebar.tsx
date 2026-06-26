@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ClipboardCheck, FlaskConical, Calculator, Presentation, BarChart2 } from 'lucide-react';
+import { ClipboardCheck, FlaskConical, Calculator, Presentation, BarChart2, Users } from 'lucide-react';
 
 interface NavItem {
   label: string;
@@ -13,6 +13,13 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
+  {
+    label: 'My Team',
+    icon: Users,
+    adminHref: '/admin/team',
+    engineerHref: '',
+    adminOnly: true,
+  },
   {
     label: 'Engineering Assessment',
     icon: ClipboardCheck,
