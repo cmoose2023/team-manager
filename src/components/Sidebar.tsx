@@ -82,7 +82,7 @@ export function Sidebar({ open, isAdmin }: SidebarProps) {
       <nav className="flex-1 py-3">
         {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map(({ label, icon: Icon, adminHref, engineerHref }) => {
           const href = isAdmin ? adminHref : engineerHref;
-          const isActive = activeHref === adminHref || activeHref === engineerHref;
+          const isActive = !!activeHref && (activeHref === adminHref || (!!engineerHref && activeHref === engineerHref));
 
           return (
             <Link
