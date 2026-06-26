@@ -51,8 +51,19 @@ interface SidebarProps {
   isAdmin: boolean;
 }
 
-export function Sidebar({ open, isAdmin }: SidebarProps) {
+function useActiveHref(isAdmin: boolean): string {
   const pathname = usePathname();
+  const visibleItems = NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin);
+  // Pick the most specific (longest) href that is a prefix of the current path
+  const match = visibleItems
+    .flatMap((item) => [item.adminHref, item.engineerHref])
+    .filter((href) => href && (pathname === href || pathname.startsWith(href + '/')))
+    .sort((a, b) => b.length - a.length)[0];
+  return match ?? '';
+}
+
+export function Sidebar({ open, isAdmin }: SidebarProps) {
+  const activeHref = useActiveHref(isAdmin);
 
   return (
     <aside
@@ -64,7 +75,7 @@ export function Sidebar({ open, isAdmin }: SidebarProps) {
       <nav className="flex-1 py-3">
         {NAV_ITEMS.filter((item) => !item.adminOnly || isAdmin).map(({ label, icon: Icon, adminHref, engineerHref }) => {
           const href = isAdmin ? adminHref : engineerHref;
-          const isActive = pathname.startsWith(adminHref) || pathname.startsWith(engineerHref);
+          const isActive = activeHref === adminHref || activeHref === engineerHref;
 
           return (
             <Link
