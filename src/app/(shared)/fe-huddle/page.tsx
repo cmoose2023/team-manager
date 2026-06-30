@@ -222,16 +222,30 @@ export default function FeHuddlePage() {
 
                     {/* Topic dropdown */}
                     <td className="px-4 py-3">
-                      <select
-                        value={draft.backlogId}
-                        onChange={(e) => handleTopicChange(session.id, e.target.value)}
-                        className="w-full text-sm border border-white/20 rounded-lg px-2 py-1.5 bg-[#0a0a0a] text-white focus:ring-2 focus:ring-[#e03030] focus:border-[#e03030] focus:outline-none"
-                      >
-                        <option value="">Select topic…</option>
-                        {backlog.map((b) => (
-                          <option key={b.id} value={b.id}>{b.title}</option>
-                        ))}
-                      </select>
+                      {(() => {
+                        const takenTopics = new Map(
+                          sessions
+                            .filter((s) => s.id !== session.id && s.backlogId)
+                            .map((s) => [s.backlogId!, s.presenterName ?? 'someone'])
+                        );
+                        return (
+                          <select
+                            value={draft.backlogId}
+                            onChange={(e) => handleTopicChange(session.id, e.target.value)}
+                            className="w-full text-sm border border-white/20 rounded-lg px-2 py-1.5 bg-[#0a0a0a] text-white focus:ring-2 focus:ring-[#e03030] focus:border-[#e03030] focus:outline-none"
+                          >
+                            <option value="">Select topic…</option>
+                            {backlog.map((b) => {
+                              const takenBy = takenTopics.get(b.id);
+                              return (
+                                <option key={b.id} value={b.id} disabled={!!takenBy}>
+                                  {takenBy ? `${b.title} (taken by ${takenBy})` : b.title}
+                                </option>
+                              );
+                            })}
+                          </select>
+                        );
+                      })()}
                     </td>
 
                     {/* Status + actions */}

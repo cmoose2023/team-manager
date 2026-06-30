@@ -212,7 +212,7 @@ export function SelfAssessmentClient({ initialPeriod }: Props) {
           <div className="flex justify-end mt-4 gap-3">
             <Link
               href={`/dashboard?period=${encodeURIComponent(selectedPeriod)}`}
-              className="px-4 py-2 bg-white border border-gray-300 text-brand-grey-dark text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
+              className="px-4 py-2 bg-white/10 border border-white/20 text-white text-sm font-medium rounded-md hover:bg-white/20 transition-colors"
             >
               Back to Dashboard
             </Link>
