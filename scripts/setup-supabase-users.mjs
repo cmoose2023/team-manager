@@ -59,6 +59,36 @@ const USERS = [
     metadata: { username: 'michael.murphy', name: 'Michael Murphy', isAdmin: false },
     profile: { level: 'PRINCIPAL_IC', jiraAccountId: '' },
   },
+  {
+    email: 'jriley@invaluable.com',
+    metadata: { username: 'justin.riley', name: 'Justin Riley', isAdmin: false },
+    profile: { level: null, jiraAccountId: null },
+  },
+  {
+    email: 'dzendzian@invaluable.com',
+    metadata: { username: 'david.zendzian', name: 'David Zendzian', isAdmin: false },
+    profile: { level: null, jiraAccountId: null },
+  },
+  {
+    email: 'abermudez@invaluable.com',
+    metadata: { username: 'alex.bermudez', name: 'Alex Bermudez', isAdmin: false },
+    profile: { level: null, jiraAccountId: null },
+  },
+  {
+    email: 'tcolucci@invaluable.com',
+    metadata: { username: 'tory.colucci', name: 'Tory Colucci', isAdmin: false },
+    profile: { level: null, jiraAccountId: null },
+  },
+  {
+    email: 'cnecklas@invaluable.com',
+    metadata: { username: 'chris.necklas', name: 'Chris Necklas', isAdmin: false },
+    profile: { level: null, jiraAccountId: null },
+  },
+  {
+    email: 'mgomes@invaluable.com',
+    metadata: { username: 'myron.gomes', name: 'Myron Gomes', isAdmin: false },
+    profile: { level: null, jiraAccountId: null },
+  },
 ];
 
 for (const { email, metadata, profile } of USERS) {
