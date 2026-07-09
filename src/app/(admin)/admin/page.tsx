@@ -31,7 +31,7 @@ export default function AdminDashboard() {
       fetchPeriods(),
     ])
       .then(([engs, admins, ps]) => {
-        setEngineers(engs.filter((e) => e.active));
+        setEngineers(engs.filter((e) => e.active && e.level));
         setAdminProfiles(admins);
         setPeriods(ps);
         if (ps.length > 0) setSelectedPeriod(ps[0]);

@@ -30,7 +30,7 @@ export default async function MyTeamPage() {
   const db = createSupabaseAdminClient();
 
   const [{ data: engineerRows }, { data: adminRows }] = await Promise.all([
-    db.from('profiles').select('*').eq('is_admin', false).order('last_name'),
+    db.from('profiles').select('*').eq('is_admin', false).not('level', 'is', null).order('last_name'),
     db.from('profiles').select('username, first_name, last_name').eq('is_admin', true),
   ]);
 
