@@ -38,7 +38,7 @@ export async function GET(): Promise<Response> {
 
     if (sprint && engineersWithJira.length > 0) {
       const accountIds = engineersWithJira.map((e) => `"${e.jiraAccountId}"`).join(',');
-      const jql = `sprint in openSprints() AND assignee in (${accountIds}) ORDER BY assignee ASC, status ASC`;
+      const jql = `sprint in openSprints() AND assignee in (${accountIds}) AND status != Done ORDER BY assignee ASC, status ASC`;
       const issues = await searchIssues(jql);
 
       engineers = engineersWithJira.map((e) => ({
